@@ -8,10 +8,10 @@
 #include "shader.h"
 #include "texture.h"
 
-Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(0.0f, 0.5f, 2.0f)), 
+Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(0.0f, 2.5f, 2.0f)), 
 m_lastX(960), m_lastY(540), m_firstMouse(true)
 {
-    
+    initChunks();
 }
 
 void Game::run()
@@ -20,7 +20,7 @@ void Game::run()
 
     Texture texture1("../res/textures/dirt.jpg", GL_RGB);
 
-    Chunk chunk;
+    //Chunk chunk(ChunkCoord(0, 0, 0));
 
     glEnable(GL_DEPTH_TEST);
 
@@ -57,8 +57,12 @@ void Game::run()
 
         texture1.bind(GL_TEXTURE0);
 
-        chunk.bind();
-        glDrawArrays(GL_TRIANGLES, 0, chunk.getVertexCount());
+        for (const auto& it : m_chunks)
+        {
+            auto& chunk = it.second;
+            chunk->bind();
+            glDrawArrays(GL_TRIANGLES, 0, chunk->getVertexCount());
+        }
 
         glfwSwapBuffers(m_window);
         glfwPollEvents();
@@ -119,4 +123,16 @@ void Game::processInput(float dt)
     m_lastY = ypos;
 
     m_camera.processMouse(dx, dy);
+}
+
+void Game::initChunks()
+{
+    for (int x = -1; x < 1; x++)
+    {
+        for (int z = -1; z < 1; z++)
+        {
+            ChunkCoord p(x, -1, z);
+            m_chunks.insert(std::make_pair(p, std::make_unique<Chunk>(p)));
+        }
+    }
 }

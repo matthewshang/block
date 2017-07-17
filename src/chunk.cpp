@@ -47,8 +47,10 @@ const float cubeVertices[] = {
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
-Chunk::Chunk()
+Chunk::Chunk(ChunkCoord pos)
 {
+    m_pos = pos;
+
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
 
@@ -148,7 +150,7 @@ void Chunk::buildVBO()
                     if (y > 0)              visible[4] = !m_blocks[x][y - 1][z];
                     if (y < CHUNK_SIZE - 1) visible[5] = !m_blocks[x][y + 1][z];
 
-                    makeCube(vertices, x, y, z, visible);
+                    makeCube(vertices, x + m_pos.getXWorld(), y + m_pos.getYWorld(), z + m_pos.getZWorld(), visible);
 
                     for (int i = 0; i < 6; i++) total += visible[i] ? 1 : 0;
                 }

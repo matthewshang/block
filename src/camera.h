@@ -34,6 +34,6 @@ private:
     float m_yaw;
     float m_pitch;
 
-    const float m_moveSpeed = 2.5f;
+    const float m_moveSpeed = 5.0f;
     const float m_mouseSens = 0.1f;
 };

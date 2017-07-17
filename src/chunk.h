@@ -5,12 +5,14 @@
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 
+#include "chunkcoord.h"
+
 const int CHUNK_SIZE = 16;
 
 class Chunk
 {
 public:
-    Chunk();
+    Chunk(ChunkCoord pos);
     ~Chunk();
 
     void bind();
@@ -24,5 +26,6 @@ private:
     GLuint m_vbo;
     int m_vertexCount;
 
+    ChunkCoord m_pos;
     uint8_t m_blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 };
