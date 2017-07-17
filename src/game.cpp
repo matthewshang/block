@@ -1,5 +1,7 @@
 #include "game.h"
 
+#include <iostream>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -39,6 +41,12 @@ void Game::run()
     {
         processInput(dt);
 
+        for (const auto& it : m_chunks)
+        {
+            auto& chunk = it.second;
+            chunk->buildMesh();
+        }
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -60,8 +68,11 @@ void Game::run()
         for (const auto& it : m_chunks)
         {
             auto& chunk = it.second;
-            chunk->bind();
-            glDrawArrays(GL_TRIANGLES, 0, chunk->getVertexCount());
+            if (!chunk->isEmpty())
+            {
+                chunk->bind();
+                glDrawArrays(GL_TRIANGLES, 0, chunk->getVertexCount());
+            }
         }
 
         glfwSwapBuffers(m_window);
@@ -108,6 +119,14 @@ void Game::processInput(float dt)
     {
         m_camera.processKeyboard(Camera::Movement::RIGHT, dt);
     }
+    if (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        m_camera.processKeyboard(Camera::Movement::UP, dt);
+    }
+    if (glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    {
+        m_camera.processKeyboard(Camera::Movement::DOWN, dt);
+    }
 
     double xpos, ypos;
     glfwGetCursorPos(m_window, &xpos, &ypos);
@@ -123,16 +142,74 @@ void Game::processInput(float dt)
     m_lastY = ypos;
 
     m_camera.processMouse(dx, dy);
+
+    if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
+        glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    {
+        const glm::vec3 &pos = m_camera.getPos();
+        Chunk *c = chunkFromWorld(pos);
+        if (c != nullptr)
+        {
+            const ChunkCoord &coords = c->getCoords();
+            std::cout << coords.x << ", " << coords.y << ", " << coords.z << std::endl;
+
+            glm::vec3 local = pos - glm::vec3(coords.getXWorld(), coords.getYWorld(), coords.getZWorld());
+            local = glm::floor(local);
+            bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+            c->setBlock(static_cast<int>(local.x), 
+                        static_cast<int>(local.y),
+                        static_cast<int>(local.z), left ? 0 : 1);
+
+        }
+    }
+}
+
+static void makeTerrain(Chunk &c)
+{
+    if (c.getCoords().getYWorld() >= 0) return;
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int y = 0; y < CHUNK_SIZE; y++)
+        {
+            for (int z = 0; z < CHUNK_SIZE; z++)
+            {
+                c.setBlock(x, y, z, 1);
+            }
+        }
+    }
 }
 
 void Game::initChunks()
 {
     for (int x = -1; x < 1; x++)
     {
-        for (int z = -1; z < 1; z++)
+        for (int y = -1; y < 1; y++)
         {
-            ChunkCoord p(x, -1, z);
-            m_chunks.insert(std::make_pair(p, std::make_unique<Chunk>(p)));
+            for (int z = -1; z < 1; z++)
+            {
+                ChunkCoord p(x, y, z);
+                auto c = std::make_shared<Chunk>(p);
+                makeTerrain(*c);
+                m_chunks.insert(std::make_pair(p, c));
+            }
         }
+    }
+}
+
+Chunk *Game::chunkFromWorld(const glm::vec3 &pos)
+{
+    glm::vec3 toChunk = pos / 16.0f;
+    int x = static_cast<int>(std::floorf(toChunk.x));
+    int y = static_cast<int>(std::floorf(toChunk.y));
+    int z = static_cast<int>(std::floorf(toChunk.z));
+
+    auto chunk = m_chunks.find(ChunkCoord(x, y, z));
+    if (chunk != m_chunks.end())
+    {
+        return chunk->second.get();
+    }
+    else
+    {
+        return nullptr;
     }
 }

@@ -18,6 +18,8 @@ void Camera::processKeyboard(Camera::Movement dir, float dt)
     case Movement::BACKWARD: m_pos -= m_front * velo; break;
     case Movement::LEFT: m_pos -= m_right * velo; break;
     case Movement::RIGHT: m_pos += m_right * velo; break;
+    case Movement::UP: m_pos += m_worldUp * velo; break;
+    case Movement::DOWN: m_pos -= m_worldUp * velo; break;
     }
 }
 

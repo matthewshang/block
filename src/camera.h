@@ -7,7 +7,7 @@ class Camera
 public:
     enum Movement
     {
-        FOWARD, BACKWARD, LEFT, RIGHT
+        FOWARD, BACKWARD, LEFT, RIGHT, UP, DOWN
     };
 
     Camera() = default;
@@ -19,6 +19,7 @@ public:
     }
 
     glm::mat4 getView();
+    const glm::vec3 &getPos() const { return m_pos; };
     void processKeyboard(Movement dir, float dt);
     void processMouse(float dx, float dy);
 

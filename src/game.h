@@ -19,8 +19,9 @@ public:
 private:
     void processInput(float dt);
     void initChunks();
+    Chunk *chunkFromWorld(const glm::vec3 &pos);
 
-    std::map<ChunkCoord, std::unique_ptr<Chunk>> m_chunks;
+    std::map<ChunkCoord, std::shared_ptr<Chunk>> m_chunks;
 
     GLFWwindow *m_window;
     Camera m_camera;
