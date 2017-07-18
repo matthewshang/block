@@ -44,7 +44,7 @@ void Game::run()
         for (const auto& it : m_chunks)
         {
             auto& chunk = it.second;
-            chunk->buildMesh();
+            updateChunk(*chunk);
         }
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -164,9 +164,18 @@ void Game::processInput(float dt)
     //}
 }
 
+void Game::updateChunk(Chunk &chunk)
+{
+    chunk.buildMesh();
+    if (chunk.getNumNeighbors() < 6)
+    {
+         
+    }
+}
+
 static void makeTerrain(Chunk &c)
 {
-    if (c.getCoords().getYWorld() >= 0) return;
+    if (c.getCoords().y >= 0) return;
     for (int x = 0; x < CHUNK_SIZE; x++)
     {
         for (int y = 0; y < CHUNK_SIZE; y++)
@@ -187,7 +196,7 @@ void Game::initChunks()
         {
             for (int z = -1; z < 1; z++)
             {
-                ChunkCoord p(x, y, z);
+                glm::ivec3 p(x, y, z);
                 std::unique_ptr<Chunk> c = std::make_unique<Chunk>(p);
                 makeTerrain(*c);
                 m_chunks.insert(std::make_pair(p, std::move(c)));
@@ -203,7 +212,7 @@ Chunk *Game::chunkFromWorld(const glm::vec3 &pos)
     int y = static_cast<int>(std::floorf(toChunk.y));
     int z = static_cast<int>(std::floorf(toChunk.z));
 
-    auto chunk = m_chunks.find(ChunkCoord(x, y, z));
+    auto chunk = m_chunks.find(glm::ivec3(x, y, z));
     if (chunk != m_chunks.end())
     {
         return chunk->second.get();
