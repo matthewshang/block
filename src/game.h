@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <vector>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -32,8 +33,9 @@ public:
     void run();
 
 private:
+    void makeTerrain(Chunk &c);
     void processInput(float dt);
-    void updateChunk(Chunk &chunk);
+    void updateChunk(Chunk &chunk, std::vector<glm::ivec3> &eraseList);
     void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 

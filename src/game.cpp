@@ -41,10 +41,16 @@ void Game::run()
     {
         processInput(dt);
 
+        std::vector<glm::ivec3> eraseList;
         for (const auto& it : m_chunks)
         {
             auto& chunk = it.second;
-            updateChunk(*chunk);
+            updateChunk(*chunk, eraseList);
+        }
+
+        for (const auto &chunk : eraseList)
+        {
+            m_chunks.erase(chunk);
         }
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -87,7 +93,7 @@ void Game::run()
         {
             char title[256];
             title[255] = '\0';
-            snprintf(title, 255, "block - [FPS: %d]", nFrames);
+            snprintf(title, 255, "block - [FPS: %d] [%d chunks]", nFrames, m_chunks.size());
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
             nFrames = 0;
@@ -164,23 +170,69 @@ void Game::processInput(float dt)
     //}
 }
 
-void Game::updateChunk(Chunk &chunk)
+void Game::updateChunk(Chunk &chunk, std::vector<glm::ivec3> &eraseList)
 {
+    if (glm::distance(chunk.getCenter(), m_camera.getPos()) > 64)
+    {
+        chunk.unhookNeighbors();
+        eraseList.push_back(chunk.getCoords());
+        return;
+    }
     chunk.buildMesh();
     if (chunk.getNumNeighbors() < 6)
     {
-         
+        static const glm::ivec3 positions[6] = {
+            glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1), glm::ivec3(-1, 0, 0),
+            glm::ivec3(1, 0, 0), glm::ivec3(0, 1, 0), glm::ivec3(0, -1, 0)
+        };
+
+        for (int i = 0; i < 6; i++)
+        {
+            if (chunk.getNeighbor(i) == nullptr)
+            {
+                glm::vec3 newPos = chunk.getCenter() + glm::vec3(positions[i] * 16) - m_camera.getPos();
+                if (glm::length(newPos) > 64)
+                    continue;
+
+                glm::ivec3 newCoords = positions[i] + chunk.getCoords();
+                auto neighbor = m_chunks.find(newCoords);
+                if (neighbor == m_chunks.end())
+                {
+                    std::unique_ptr<Chunk> c = std::make_unique<Chunk>(newCoords);
+                    makeTerrain(*c);
+                    chunk.hookNeighbor(i, c.get());
+                    c->hookNeighbor(Chunk::opposites[i], &chunk);
+                    m_chunks.insert(std::make_pair(newCoords, std::move(c)));
+                }
+                else
+                {
+                    chunk.hookNeighbor(i, neighbor->second.get());
+                    neighbor->second->hookNeighbor(Chunk::opposites[i], &chunk);
+                }
+            }
+        }
     }
 }
 
-static void makeTerrain(Chunk &c)
+void Game::makeTerrain(Chunk &c)
 {
-    if (c.getCoords().y >= 0) return;
-    for (int x = 0; x < CHUNK_SIZE; x++)
+    //if (c.getCoords().y >= 0) return;
+    //for (int x = 0; x < CHUNK_SIZE; x++)
+    //{
+    //    for (int y = 0; y < CHUNK_SIZE; y++)
+    //    {
+    //        for (int z = 0; z < CHUNK_SIZE; z++)
+    //        {
+    //            c.setBlock(x, y, z, 1);
+    //        }
+    //    }
+    //}
+
+    for (int x = 6; x < 10; x++)
     {
-        for (int y = 0; y < CHUNK_SIZE; y++)
+        for (int y = 6; y < 10; y++)
         {
-            for (int z = 0; z < CHUNK_SIZE; z++)
+            for (int z = 6; z < 10; z++)
             {
                 c.setBlock(x, y, z, 1);
             }
@@ -190,19 +242,23 @@ static void makeTerrain(Chunk &c)
 
 void Game::initChunks()
 {
-    for (int x = -1; x < 1; x++)
-    {
-        for (int y = -1; y < 1; y++)
-        {
-            for (int z = -1; z < 1; z++)
-            {
-                glm::ivec3 p(x, y, z);
-                std::unique_ptr<Chunk> c = std::make_unique<Chunk>(p);
-                makeTerrain(*c);
-                m_chunks.insert(std::make_pair(p, std::move(c)));
-            }
-        }
-    }
+    glm::ivec3 p(0, -1, 0);
+    std::unique_ptr<Chunk> c = std::make_unique<Chunk>(p);
+    makeTerrain(*c);
+    m_chunks.insert(std::make_pair(p, std::move(c)));
+    //for (int x = -1; x < 1; x++)
+    //{
+    //    for (int y = -1; y < 1; y++)
+    //    {
+    //        for (int z = -1; z < 1; z++)
+    //        {
+    //            glm::ivec3 p(x, y, z);
+    //            std::unique_ptr<Chunk> c = std::make_unique<Chunk>(p);
+    //            makeTerrain(*c);
+    //            m_chunks.insert(std::make_pair(p, std::move(c)));
+    //        }
+    //    }
+    //}
 }
 
 Chunk *Game::chunkFromWorld(const glm::vec3 &pos)

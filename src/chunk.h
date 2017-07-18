@@ -10,10 +10,7 @@ const int CHUNK_SIZE = 16;
 class Chunk
 {
 public:
-    enum Neighbor
-    {
-        Front, Back, Left, Right, Top, Bottom
-    };
+    static const int opposites[6];
 
     Chunk(glm::ivec3 pos);
     ~Chunk();
@@ -24,7 +21,9 @@ public:
     int getVertexCount();
     bool isEmpty();
     void setBlock(int x, int y, int z, uint8_t type);
-    void hookNeighbor(Neighbor n, Chunk *chunk);
+    void hookNeighbor(int n, Chunk *chunk);
+    void unhookNeighbors();
+    Chunk *getNeighbor(int n);
     int getNumNeighbors() { return m_numNeighbors; };
 
     const glm::ivec3 &getCoords() { return m_pos; };

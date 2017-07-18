@@ -3,11 +3,17 @@
 #include <iostream>
 #include <vector>
 
+const int Chunk::opposites[6] = {
+    1, 0, 3, 2, 5, 4
+};
+
 Chunk::Chunk(glm::ivec3 pos) : m_numNeighbors(0)
 {
     m_pos = pos;
     m_worldCenter = glm::vec3(pos.x * 16 + 8, pos.y * 16 + 8, pos.z * 16 + 8);
     m_dirty = true;
+
+    for (int i = 0; i < 6; i++) m_neighbors[i] = nullptr;
 
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
@@ -51,10 +57,28 @@ void Chunk::setBlock(int x, int y, int z, uint8_t type)
     m_dirty = true;
 }
 
-void Chunk::hookNeighbor(Neighbor n, Chunk *chunk)
+void Chunk::hookNeighbor(int n, Chunk *chunk)
 {
     m_neighbors[n] = chunk;
     m_numNeighbors++;
+}
+
+void Chunk::unhookNeighbors()
+{
+    for (int i = 0; i < 6; i++)
+    {
+        if (m_neighbors[i] != nullptr)
+        {
+            m_neighbors[i]->m_neighbors[opposites[i]] = nullptr;
+            m_neighbors[i]->m_numNeighbors--;
+            m_neighbors[i] = nullptr;
+        }
+    }
+}
+
+Chunk *Chunk::getNeighbor(int n)
+{
+    return m_neighbors[n];
 }
 
 void makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6])
