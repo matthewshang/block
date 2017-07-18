@@ -136,32 +136,32 @@ void Game::processInput(float dt)
         m_lastY = ypos;
         m_firstMouse = false;
     }
-    float dx = xpos - m_lastX;
-    float dy = m_lastY - ypos;
+    float dx = static_cast<float>(xpos - m_lastX);
+    float dy = static_cast<float>(m_lastY - ypos);
     m_lastX = xpos;
     m_lastY = ypos;
 
     m_camera.processMouse(dx, dy);
 
-    if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
-        glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    {
-        const glm::vec3 &pos = m_camera.getPos();
-        Chunk *c = chunkFromWorld(pos);
-        if (c != nullptr)
-        {
-            const ChunkCoord &coords = c->getCoords();
-            std::cout << coords.x << ", " << coords.y << ", " << coords.z << std::endl;
+    //if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
+    //    glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    //{
+    //    const glm::vec3 &pos = m_camera.getPos();
+    //    Chunk *c = chunkFromWorld(pos);
+    //    if (c != nullptr)
+    //    {
+    //        const ChunkCoord &coords = c->getCoords();
+    //        std::cout << coords.x << ", " << coords.y << ", " << coords.z << std::endl;
 
-            glm::vec3 local = pos - glm::vec3(coords.getXWorld(), coords.getYWorld(), coords.getZWorld());
-            local = glm::floor(local);
-            bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-            c->setBlock(static_cast<int>(local.x), 
-                        static_cast<int>(local.y),
-                        static_cast<int>(local.z), left ? 0 : 1);
+    //        glm::vec3 local = pos - glm::vec3(coords.getXWorld(), coords.getYWorld(), coords.getZWorld());
+    //        local = glm::floor(local);
+    //        bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    //        c->setBlock(static_cast<int>(local.x), 
+    //                    static_cast<int>(local.y),
+    //                    static_cast<int>(local.z), left ? 0 : 1);
 
-        }
-    }
+    //    }
+    //}
 }
 
 static void makeTerrain(Chunk &c)
@@ -188,9 +188,9 @@ void Game::initChunks()
             for (int z = -1; z < 1; z++)
             {
                 ChunkCoord p(x, y, z);
-                auto c = std::make_shared<Chunk>(p);
+                std::unique_ptr<Chunk> c = std::make_unique<Chunk>(p);
                 makeTerrain(*c);
-                m_chunks.insert(std::make_pair(p, c));
+                m_chunks.insert(std::make_pair(p, std::move(c)));
             }
         }
     }
