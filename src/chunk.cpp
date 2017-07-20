@@ -158,7 +158,7 @@ void Chunk::buildMesh()
                 }
             }
         }
-        std::cout << "Faces: " << total << std::endl;
+        //std::cout << "Faces: " << total << std::endl;
         m_vertexCount = vertices.size() / 5;
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
         m_dirty = false;

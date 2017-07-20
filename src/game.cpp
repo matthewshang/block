@@ -1,5 +1,6 @@
 #include "game.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include <glm/glm.hpp>
@@ -7,12 +8,14 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "chunk.h"
+#include "perlin.h"
 #include "shader.h"
 #include "texture.h"
 
-Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(0.0f, 2.5f, 2.0f)), 
+Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(0.0f, 0.0f, 2.0f)), 
 m_lastX(960), m_lastY(540), m_firstMouse(true)
 {
+    Perlin::initPermutation();
     initChunks();
 }
 
@@ -20,7 +23,7 @@ void Game::run()
 {
     Shader shader("../res/shaders/simple_vertex.glsl", "../res/shaders/simple_fragment.glsl");
 
-    Texture texture1("../res/textures/dirt.jpg", GL_RGB);
+    Texture texture1("../res/textures/grass.jpg", GL_RGB);
 
     //Chunk chunk(ChunkCoord(0, 0, 0));
 
@@ -179,38 +182,51 @@ void Game::updateChunk(Chunk &chunk, std::vector<glm::ivec3> &eraseList)
         return;
     }
     chunk.buildMesh();
-    if (chunk.getNumNeighbors() < 6)
+    //if (chunk.getNumNeighbors() < 6)
+    //{
+    //    static const glm::ivec3 positions[6] = {
+    //        glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1), glm::ivec3(-1, 0, 0),
+    //        glm::ivec3(1, 0, 0), glm::ivec3(0, 1, 0), glm::ivec3(0, -1, 0)
+    //    };
+
+    //    for (int i = 0; i < 6; i++)
+    //    {
+    //        if (chunk.getNeighbor(i) == nullptr)
+    //        {
+    //            glm::vec3 newPos = chunk.getCenter() + glm::vec3(positions[i] * 16) - m_camera.getPos();
+    //            if (glm::length(newPos) > 64)
+    //                continue;
+
+    //            glm::ivec3 newCoords = positions[i] + chunk.getCoords();
+
+    //            auto neighbor = m_chunks.find(newCoords);
+    //            if (neighbor == m_chunks.end())
+    //            {
+    //                std::unique_ptr<Chunk> c = std::make_unique<Chunk>(newCoords);
+    //                makeTerrain(*c);
+    //                chunk.hookNeighbor(i, c.get());
+    //                c->hookNeighbor(Chunk::opposites[i], &chunk);
+    //                m_chunks.insert(std::make_pair(newCoords, std::move(c)));
+    //            }
+    //            else
+    //            {
+    //                chunk.hookNeighbor(i, neighbor->second.get());
+    //                neighbor->second->hookNeighbor(Chunk::opposites[i], &chunk);
+    //            }
+    //        }
+    //    }
+    //}
+    glm::vec3 toChunk = m_camera.getPos() / 16.0f;
+    int x = static_cast<int>(std::floorf(toChunk.x));
+    int y = static_cast<int>(std::floorf(toChunk.y));
+    int z = static_cast<int>(std::floorf(toChunk.z));
+
+    glm::ivec3 p(x, y, z);
+    if (m_chunks.find(p) == m_chunks.end())
     {
-        static const glm::ivec3 positions[6] = {
-            glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1), glm::ivec3(-1, 0, 0),
-            glm::ivec3(1, 0, 0), glm::ivec3(0, 1, 0), glm::ivec3(0, -1, 0)
-        };
-
-        for (int i = 0; i < 6; i++)
-        {
-            if (chunk.getNeighbor(i) == nullptr)
-            {
-                glm::vec3 newPos = chunk.getCenter() + glm::vec3(positions[i] * 16) - m_camera.getPos();
-                if (glm::length(newPos) > 64)
-                    continue;
-
-                glm::ivec3 newCoords = positions[i] + chunk.getCoords();
-                auto neighbor = m_chunks.find(newCoords);
-                if (neighbor == m_chunks.end())
-                {
-                    std::unique_ptr<Chunk> c = std::make_unique<Chunk>(newCoords);
-                    makeTerrain(*c);
-                    chunk.hookNeighbor(i, c.get());
-                    c->hookNeighbor(Chunk::opposites[i], &chunk);
-                    m_chunks.insert(std::make_pair(newCoords, std::move(c)));
-                }
-                else
-                {
-                    chunk.hookNeighbor(i, neighbor->second.get());
-                    neighbor->second->hookNeighbor(Chunk::opposites[i], &chunk);
-                }
-            }
-        }
+        std::unique_ptr<Chunk> c = std::make_unique<Chunk>(p);
+        makeTerrain(*c);
+        m_chunks.insert(std::make_pair(p, std::move(c)));
     }
 }
 
@@ -228,21 +244,51 @@ void Game::makeTerrain(Chunk &c)
     //    }
     //}
 
-    for (int x = 6; x < 10; x++)
+    double min = 10000000000;
+    double max = -100000000000;
+    const glm::ivec3 &coords = c.getCoords();
+    for (int x = 0; x < CHUNK_SIZE; x++)
     {
-        for (int y = 6; y < 10; y++)
+        for (int y = 0; y < CHUNK_SIZE; y++)
         {
-            for (int z = 6; z < 10; z++)
+            for (int z = 0; z < CHUNK_SIZE; z++)
             {
-                c.setBlock(x, y, z, 1);
+                int rx = coords.x * 16 + x;
+                int ry = coords.y * 16 + y;
+                int rz = coords.z * 16 + z;
+                double p = Perlin::perlin3(
+                    static_cast<double>(rx) * 0.05,
+                    static_cast<double>(ry) * 0.05 + 5,
+                    static_cast<double>(rz) * 0.05, 6, 0.5);
+
+                min = std::min(min, p);
+                max = std::max(max, p);
+
+                double depth = 1.0 - std::max(0.0, std::min((static_cast<double>(ry) + 64.0) / 128.0, 1.0));
+                //std::cout << depth << std::endl;
+
+                p = p * 0.25 + depth * 0.75;
+                //p *= depth;
+                
+                if (p > 0.3)
+                {
+                    c.setBlock(x, y, z, 1);
+                }
             }
         }
     }
+
+    std::cout << min << ", " << max << std::endl;
 }
 
 void Game::initChunks()
 {
-    glm::ivec3 p(0, -1, 0);
+    glm::vec3 toChunk = m_camera.getPos() / 16.0f;
+    int x = static_cast<int>(std::floorf(toChunk.x));
+    int y = static_cast<int>(std::floorf(toChunk.y));
+    int z = static_cast<int>(std::floorf(toChunk.z));
+
+    glm::ivec3 p(x, y, z);
     std::unique_ptr<Chunk> c = std::make_unique<Chunk>(p);
     makeTerrain(*c);
     m_chunks.insert(std::make_pair(p, std::move(c)));
