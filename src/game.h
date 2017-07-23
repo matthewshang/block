@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include <glad/glad.h>
@@ -9,6 +10,7 @@
 
 #include "camera.h"
 #include "chunk.h"
+#include "threadpool.h"
 
 struct ChunkCompare
 {
@@ -35,11 +37,17 @@ public:
 private:
     void makeTerrain(Chunk &c);
     void processInput(float dt);
-    void updateChunk(Chunk &chunk, std::vector<glm::ivec3> &eraseList);
+    void updateChunk(Chunk *chunk);
+    void loadChunks();
     void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 
+    const int m_renderDistance = 1;
     std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> m_chunks;
+    std::vector<std::unique_ptr<Chunk>> m_toAdd;
+    std::vector<glm::ivec3> m_toErase;
+    ThreadPool m_pool;
+    std::mutex m_mutex;
 
     GLFWwindow *m_window;
     Camera m_camera;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 
 class Perlin
 {
@@ -10,10 +11,11 @@ public:
 
 private:
     static double noise3(double x, double y, double z);
+    static double improved(double x, double y, double z);
 
     static int inc(int n);
 
-    static const int permutation[256];
-    static int p[512];
+    static const uint8_t permutation[256];
+    static uint8_t p[512];
     static const double repeat;
 };

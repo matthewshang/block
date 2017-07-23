@@ -27,6 +27,7 @@
     <ClCompile Include="..\src\perlin.cpp" />
     <ClCompile Include="..\src\shader.cpp" />
     <ClCompile Include="..\src\texture.cpp" />
+    <ClCompile Include="..\src\threadpool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\camera.h" />
@@ -36,6 +37,7 @@
     <ClInclude Include="..\src\shader.h" />
     <ClInclude Include="..\src\stb_image.h" />
     <ClInclude Include="..\src\texture.h" />
+    <ClInclude Include="..\src\threadpool.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\simple_fragment.glsl" />
@@ -117,6 +119,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>NotSet</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

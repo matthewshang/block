@@ -1,10 +1,13 @@
+// http://flafla2.github.io/2014/08/09/perlinnoise.html
+
 #include "perlin.h"
 
 #include <cmath>
 
-int Perlin::p[512];
+uint8_t Perlin::p[512];
 
-const int Perlin::permutation[256] = {
+const uint8_t Perlin::permutation[256] = {
+    151,160,137,91,90,15,
     131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
     190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
     88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
@@ -37,7 +40,9 @@ double Perlin::perlin3(double x, double y, double z, int octaves, double persist
     double maxValue = 0;
     for (int i = 0; i < octaves; i++)
     {
-        total += noise3(x * frequency, y * frequency, z * frequency) * amplitude;
+        //total += noise3(x * frequency, y * frequency, z * frequency) * amplitude;
+        total += improved(x * frequency, y * frequency, z * frequency) * amplitude;
+
         maxValue += amplitude;
         amplitude *= persistence;
         frequency *= 2;
@@ -131,4 +136,28 @@ double Perlin::noise3(double x, double y, double z)
     y2 = lerp(x1, x2, v);
 
     return (lerp(y1, y2, w) + 1) / 2;
+}
+
+double Perlin::improved(double x, double y, double z)
+{
+    int X = static_cast<int>(floor(x)) & 255;
+    int Y = static_cast<int>(floor(y)) & 255;
+    int Z = static_cast<int>(floor(z)) & 255;
+    x -= floor(x);
+    y -= floor(y);
+    z -= floor(z);
+    double u = fade(x);
+    double v = fade(y);
+    double w = fade(z);
+    int A = p[X    ] + Y, AA = p[A] + Z, AB = p[A + 1] + Z,
+        B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z;
+
+    return lerp(lerp(lerp(grad(p[AA    ], x    , y,     z    ),
+                          grad(p[BA    ], x - 1, y,     z    ), u),
+                     lerp(grad(p[AB    ], x    , y - 1, z    ),
+                          grad(p[BB    ], x - 1, y - 1, z    ), u), v),
+                lerp(lerp(grad(p[AA + 1], x    , y    , z - 1), 
+                          grad(p[BA + 1], x - 1, y    , z - 1), u),
+                     lerp(grad(p[AB + 1], x    , y - 1, z - 1),
+                          grad(p[BB + 1], x - 1, y - 1, z - 1), u), v), w);
 }
