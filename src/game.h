@@ -10,6 +10,7 @@
 
 #include "camera.h"
 #include "chunk.h"
+#include "perlin.h"
 #include "threadpool.h"
 
 struct ChunkCompare
@@ -47,7 +48,7 @@ private:
     std::vector<std::unique_ptr<Chunk>> m_toAdd;
     std::vector<glm::ivec3> m_toErase;
     ThreadPool m_pool;
-    std::mutex m_mutex;
+    Perlin m_noise;
 
     GLFWwindow *m_window;
     Camera m_camera;

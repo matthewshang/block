@@ -9,14 +9,12 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "chunk.h"
-#include "perlin.h"
 #include "shader.h"
 #include "texture.h"
 
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(0.0f, 40.0f, 2.0f)), 
-m_lastX(960), m_lastY(540), m_firstMouse(true)
+m_lastX(960), m_lastY(540), m_firstMouse(true), m_noise()
 {
-    Perlin::initPermutation();
     initChunks();
 }
 
@@ -213,14 +211,9 @@ void Game::loadChunks()
                 auto chunk = m_chunks.find(coords);
                 if (chunk == m_chunks.end())
                 {
-                    //auto makeChunk = [coords, this]() -> void
-                    //{
-                        std::unique_ptr<Chunk> c = std::make_unique<Chunk>(coords);
-                        makeTerrain(*c);
-                    //    std::lock_guard<std::mutex> lock(m_mutex);
-                        m_toAdd.push_back(std::move(c));
-                    //};
-                    //m_pool.addJob(makeChunk);
+                    std::unique_ptr<Chunk> c = std::make_unique<Chunk>(coords);
+                    makeTerrain(*c);
+                    m_toAdd.push_back(std::move(c));
                 }
             }
         }
@@ -247,10 +240,10 @@ void Game::makeTerrain(Chunk &c)
                 int ry = coords.y * 16 + y;
                 int rz = coords.z * 16 + z;
 
-                double p = Perlin::perlin3(
-                    static_cast<double>(rx) * 0.05,
-                    static_cast<double>(ry) * 0.05 + 5,
-                    static_cast<double>(rz) * 0.05, 4, 0.5);
+                double p = m_noise.noise3(
+                    static_cast<double>(rx) * 0.07,
+                    static_cast<double>(ry) * 0.07,
+                    static_cast<double>(rz) * 0.07);
 
                 double depth = 1.0 - std::max(0.0, std::min((static_cast<double>(ry) + 64.0) / 128.0, 1.0));
 
@@ -266,8 +259,9 @@ void Game::makeTerrain(Chunk &c)
 
     auto end = std::chrono::high_resolution_clock::now();
 
-    std::chrono::duration<double> diff = end - start;
-    std::cout << "makeTerrain time: " << diff.count() << "s" << std::endl;
+    auto diff = end - start;
+    auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(diff);
+    std::cout << "makeTerrain time: " << diff.count() << "s, average: " << nano.count() / 4096 << "ns" << std::endl;
 }
 
 void Game::initChunks()

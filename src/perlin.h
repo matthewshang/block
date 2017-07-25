@@ -1,21 +1,16 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 class Perlin
 {
 public:
-    static void initPermutation();
+    Perlin::Perlin();
 
-    static double perlin3(double x, double y, double z, int octaves, double persistence);
+    double perlin3(double x, double y, double z, int octaves, double persistence);
+    double noise3(double x, double y, double z);
 
 private:
-    static double noise3(double x, double y, double z);
-    static double improved(double x, double y, double z);
-
-    static int inc(int n);
-
-    static const uint8_t permutation[256];
-    static uint8_t p[512];
-    static const double repeat;
+    std::vector<std::uint8_t> m_p;
 };
