@@ -10,23 +10,10 @@
 
 #include "camera.h"
 #include "chunk.h"
+#include "chunkcompare.h"
+#include "chunklist.h"
 #include "perlin.h"
 #include "threadpool.h"
-
-struct ChunkCompare
-{
-    bool operator() (const glm::ivec3 &a, const glm::ivec3 &b) const
-    {
-        if (a.x != b.x)
-            return a.x < b.x;
-        else if (a.y != b.y)
-            return a.y < b.y;
-        else if (a.z != b.z)
-            return a.z < b.z;
-        else
-            return false;
-    }
-};
 
 class Game
 {
@@ -45,6 +32,7 @@ private:
 
     const int m_renderDistance = 1;
     std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> m_chunks;
+    ChunkList m_processed;
     std::vector<std::unique_ptr<Chunk>> m_toAdd;
     std::vector<glm::ivec3> m_toErase;
     ThreadPool m_pool;

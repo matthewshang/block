@@ -13,7 +13,7 @@
 #include "texture.h"
 
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(0.0f, 40.0f, 2.0f)), 
-m_lastX(960), m_lastY(540), m_firstMouse(true), m_noise()
+m_lastX(960), m_lastY(540), m_firstMouse(true), m_noise(), m_processed()
 {
     initChunks();
 }
@@ -45,11 +45,18 @@ void Game::run()
 
         loadChunks();
 
+        auto start = std::chrono::high_resolution_clock::now();
+
         for (const auto& it : m_chunks)
         {
             auto& chunk = it.second;
             updateChunk(chunk.get());
         }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+        if (diff.count() > 0) std::cout << "loadChunks: " << diff.count() << "ms" << std::endl;
 
         for (const auto &chunk : m_toErase)
         {
@@ -57,12 +64,7 @@ void Game::run()
         }
         m_toErase.clear();
 
-        for (auto& chunk : m_toAdd)
-        {
-            glm::ivec3 coords = chunk->getCoords();
-            m_chunks.insert(std::make_pair(std::move(coords), std::move(chunk)));
-        }
-        m_toAdd.clear();
+        m_processed.moveChunks(m_chunks);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -186,7 +188,6 @@ void Game::updateChunk(Chunk *chunk)
 {
     if (glm::distance(chunk->getCenter(), m_camera.getPos()) > 64)
     {
-        chunk->unhookNeighbors();
         m_toErase.push_back(chunk->getCoords());
         return;
     }
@@ -208,21 +209,27 @@ void Game::loadChunks()
             for (int z = -m_renderDistance; z <= m_renderDistance; z++)
             {
                 glm::ivec3 coords = current + glm::ivec3(x, y, z);
+                if (m_processed.hasChunk(coords)) 
+                    continue;
+
                 auto chunk = m_chunks.find(coords);
                 if (chunk == m_chunks.end())
                 {
-                    std::unique_ptr<Chunk> c = std::make_unique<Chunk>(coords);
-                    makeTerrain(*c);
-                    m_toAdd.push_back(std::move(c));
+                    Chunk *c = new Chunk(coords);
+                    auto lambda = [c, this]() -> void
+                    {
+                        makeTerrain(*c);
+                        std::unique_ptr<Chunk> ptr(c);
+                        m_processed.push(ptr);
+                    };
+                    m_pool.addJob(lambda);
+                    //std::unique_ptr<Chunk> c = std::make_unique<Chunk>(coords);
+                    //makeTerrain(*c);
+                    //m_processed.push(c);
                 }
             }
         }
     }
-}
-
-static double lerp(double a, double b, double x)
-{
-    return a + x * (b - a);
 }
 
 void Game::makeTerrain(Chunk &c)
@@ -261,7 +268,7 @@ void Game::makeTerrain(Chunk &c)
 
     auto diff = end - start;
     auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(diff);
-    std::cout << "makeTerrain time: " << diff.count() << "s, average: " << nano.count() / 4096 << "ns" << std::endl;
+    //std::cout << "average: " << nano.count() / 4096 << "ns" << std::endl;
 }
 
 void Game::initChunks()
