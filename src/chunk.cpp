@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "blocks.h"
+
 const int Chunk::opposites[6] = {
     1, 0, 3, 2, 5, 4
 };
@@ -53,7 +55,12 @@ void Chunk::setBlock(int x, int y, int z, uint8_t type)
     m_dirty = true;
 }
 
-void makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6])
+uint8_t Chunk::getBlock(int x, int y, int z)
+{
+    return m_blocks[x][y][z];
+}
+
+void makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6], int type)
 {
     static const glm::vec3 positions[6][4] = {
         { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3(-0.5f,  0.5f, -0.5f) },
@@ -65,12 +72,12 @@ void makeCube(std::vector<float> &vertices, float x, float y, float z, bool face
     };
 
     static const glm::vec2 texcoords[6][4] = {
+        { glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f) },
         { glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f) },
-        { glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f) },
-        { glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f) },
-        { glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f) },
+        { glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f) },
         { glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f) },
-        { glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f) }
+        { glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f) },
+        { glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f) }
     };
 
     static const int indices[6][6] = {
@@ -82,18 +89,24 @@ void makeCube(std::vector<float> &vertices, float x, float y, float z, bool face
         { 0, 3, 2, 0, 2, 1 }
     };
 
+    float s = 1.0f / 16.0f;
+    
+
     for (int i = 0; i < 6; i++)
     {
         if (!faces[i]) continue;
 
+        int idx = Blocks::faces[type][i];
+        float tu = s * static_cast<float>(idx % 16);
+        float tv = 1.0f - s * static_cast<float>(idx / 16) - s;
         for (int v = 0; v < 6; v++)
         {
             int j = indices[i][v];
             vertices.push_back(positions[i][j].x + x);
             vertices.push_back(positions[i][j].y + y);
             vertices.push_back(positions[i][j].z + z);
-            vertices.push_back(texcoords[i][j].x);
-            vertices.push_back(texcoords[i][j].y);
+            vertices.push_back(tu + texcoords[i][j].x * s);
+            vertices.push_back(tv + texcoords[i][j].y * s);
         }
     }
 }
@@ -121,7 +134,8 @@ void Chunk::buildMesh()
                         if (y > 0)              visible[4] = !m_blocks[x][y - 1][z];
                         if (y < CHUNK_SIZE - 1) visible[5] = !m_blocks[x][y + 1][z];
 
-                        makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible);
+                        makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible,
+                            m_blocks[x][y][z]);
 
                         for (int i = 0; i < 6; i++) total += visible[i] ? 1 : 0;
                     }
@@ -156,7 +170,7 @@ void Chunk::initBlocks()
         {
             for (int z = 0; z < CHUNK_SIZE; z++)
             {
-                m_blocks[x][y][z] = 0;
+                m_blocks[x][y][z] = Blocks::Air;
             }
         }
     }

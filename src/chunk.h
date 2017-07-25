@@ -23,6 +23,7 @@ public:
     int getVertexCount();
     bool isEmpty();
     void setBlock(int x, int y, int z, uint8_t type);
+    uint8_t getBlock(int x, int y, int z);
 
     const glm::ivec3 &getCoords() { return m_pos; };
     const glm::vec3 &getCenter() { return m_worldCenter; };

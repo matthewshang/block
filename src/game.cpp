@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "blocks.h"
 #include "chunk.h"
 #include "shader.h"
 #include "texture.h"
@@ -20,9 +21,10 @@ m_lastX(960), m_lastY(540), m_firstMouse(true), m_noise(), m_processed()
 
 void Game::run()
 {
-    Shader shader("../res/shaders/simple_vertex.glsl", "../res/shaders/simple_fragment.glsl");
+    Shader shader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl");
 
-    Texture texture1("../res/textures/grass.jpg", GL_RGB);
+    //Texture texture1("../res/textures/grass.jpg", GL_RGB);
+    Texture texture1("../res/textures/terrain.png", GL_RGBA);
 
     //Chunk chunk(ChunkCoord(0, 0, 0));
 
@@ -215,20 +217,16 @@ void Game::loadChunks()
                 if (m_loadedChunks.find(coords) != m_loadedChunks.end()) 
                     continue;
 
-                auto chunk = m_chunks.find(coords);
-                if (chunk == m_chunks.end())
+                Chunk *c = new Chunk(coords);
+                m_loadedChunks.insert(coords);
+                auto lambda = [c, this]() -> void
                 {
-                    Chunk *c = new Chunk(coords);
-                    m_loadedChunks.insert(coords);
-                    auto lambda = [c, this]() -> void
-                    {
-                        makeTerrain(*c);
-                        c->buildMesh();
-                        std::unique_ptr<Chunk> ptr(c);
-                        m_processed.push(ptr);
-                    };
-                    m_pool.addJob(lambda);
-                }
+                    makeTerrain(*c);
+                    c->buildMesh();
+                    std::unique_ptr<Chunk> ptr(c);
+                    m_processed.push(ptr);
+                };
+                m_pool.addJob(lambda);
             }
         }
     }
@@ -258,9 +256,28 @@ void Game::makeTerrain(Chunk &c)
 
                 p = p * 0.25 + depth * 0.75;
                  
-                if (p > 0.3)
+                if (p < 0.3 && p > 0.2)
                 {
-                    c.setBlock(x, y, z, 1);
+                    c.setBlock(x, y, z, Blocks::Dirt);
+                }
+                else if (p > 0.3)
+                {
+                    c.setBlock(x, y, z, Blocks::Stone);
+                }
+            }
+        }
+    }
+
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int z = 0; z < CHUNK_SIZE; z++)
+        {
+            for (int y = CHUNK_SIZE - 1; y >= 0; y--)
+            {
+                if (c.getBlock(x, y, z) == Blocks::Dirt)
+                {
+                    c.setBlock(x, y, z, Blocks::Grass);
+                    break;
                 }
             }
         }

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\blocks.cpp" />
     <ClCompile Include="..\src\camera.cpp" />
     <ClCompile Include="..\src\chunk.cpp" />
     <ClCompile Include="..\src\chunklist.cpp" />
@@ -31,6 +32,7 @@
     <ClCompile Include="..\src\threadpool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\blocks.h" />
     <ClInclude Include="..\src\camera.h" />
     <ClInclude Include="..\src\chunk.h" />
     <ClInclude Include="..\src\chunkcompare.h" />
@@ -43,8 +45,8 @@
     <ClInclude Include="..\src\threadpool.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\res\shaders\simple_fragment.glsl" />
-    <None Include="..\res\shaders\simple_vertex.glsl" />
+    <None Include="..\res\shaders\block_fragment.glsl" />
+    <None Include="..\res\shaders\block_vertex.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2D5579B2-41DC-4995-8594-ED646344192F}</ProjectGuid>
