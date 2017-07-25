@@ -39,6 +39,11 @@ void ThreadPool::waitUntilCompleted()
     m_finishCond.wait(lock);
 }
 
+int ThreadPool::getJobsAmount()
+{
+    return m_jobsPending;
+}
+
 void ThreadPool::getJob()
 {
     while (true)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glad/glad.h>
@@ -16,6 +17,7 @@ public:
     ~Chunk();
 
     void buildMesh();
+    void bufferData();
 
     void bind();
     int getVertexCount();
@@ -33,8 +35,10 @@ private:
     int m_vertexCount;
     bool m_empty;
     bool m_dirty;
+    bool m_glDirty;
 
     glm::ivec3 m_pos;
     glm::vec3 m_worldCenter;
     uint8_t m_blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    std::vector<float> m_vertices;
 };

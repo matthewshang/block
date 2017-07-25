@@ -43,9 +43,9 @@ void Game::run()
     {
         processInput(dt);
 
-        loadChunks();
+        if (nFrames % 2 == 0) loadChunks();
 
-        auto start = std::chrono::high_resolution_clock::now();
+        //auto start = std::chrono::high_resolution_clock::now();
 
         for (const auto& it : m_chunks)
         {
@@ -53,10 +53,10 @@ void Game::run()
             updateChunk(chunk.get());
         }
 
-        auto end = std::chrono::high_resolution_clock::now();
-        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        //auto end = std::chrono::high_resolution_clock::now();
+        //auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-        if (diff.count() > 0) std::cout << "loadChunks: " << diff.count() << "ms" << std::endl;
+        //if (diff.count() > 0) std::cout << "update: " << diff.count() << "ms" << std::endl;
 
         for (const auto &chunk : m_toErase)
         {
@@ -106,7 +106,7 @@ void Game::run()
         {
             char title[256];
             title[255] = '\0';
-            snprintf(title, 255, "block - [FPS: %d] [%d chunks] [pos: %f, %f, %f]", nFrames, m_chunks.size(),
+            snprintf(title, 255, "block - [FPS: %d] [%d chunks] [%d jobs queued] [pos: %f, %f, %f]", nFrames, m_chunks.size(), m_pool.getJobsAmount(),
                 m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z);
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
@@ -186,12 +186,13 @@ void Game::processInput(float dt)
 
 void Game::updateChunk(Chunk *chunk)
 {
-    if (glm::distance(chunk->getCenter(), m_camera.getPos()) > 64)
+    if (glm::distance(chunk->getCenter(), m_camera.getPos()) > 90)
     {
         m_toErase.push_back(chunk->getCoords());
         return;
     }
     chunk->buildMesh();
+    chunk->bufferData();
 }
 
 void Game::loadChunks()
@@ -219,13 +220,11 @@ void Game::loadChunks()
                     auto lambda = [c, this]() -> void
                     {
                         makeTerrain(*c);
+                        c->buildMesh();
                         std::unique_ptr<Chunk> ptr(c);
                         m_processed.push(ptr);
                     };
                     m_pool.addJob(lambda);
-                    //std::unique_ptr<Chunk> c = std::make_unique<Chunk>(coords);
-                    //makeTerrain(*c);
-                    //m_processed.push(c);
                 }
             }
         }

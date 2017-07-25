@@ -14,6 +14,7 @@ public:
 
     void push(std::unique_ptr<Chunk> &c);
     bool hasChunk(const glm::ivec3 &coords);
+    int size();
     void moveChunks(std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> &chunks);
 
 private:

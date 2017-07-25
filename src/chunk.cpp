@@ -1,13 +1,12 @@
 #include "chunk.h"
 
 #include <iostream>
-#include <vector>
 
 const int Chunk::opposites[6] = {
     1, 0, 3, 2, 5, 4
 };
 
-Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(true)
+Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(true), m_glDirty(true), m_vertices()
 {
     m_worldCenter = glm::vec3(pos.x * 16 + 8, pos.y * 16 + 8, pos.z * 16 + 8);
 
@@ -17,6 +16,7 @@ Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(true)
     glGenBuffers(1, &m_vbo);
     initBlocks();
     buildMesh();
+    bufferData();
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -102,10 +102,8 @@ void Chunk::buildMesh()
 {
     if (m_dirty)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-        std::vector<float> vertices;
         int total = 0;
+        m_vertices.clear();
 
         for (int x = 0; x < CHUNK_SIZE; x++)
         {
@@ -123,7 +121,7 @@ void Chunk::buildMesh()
                         if (y > 0)              visible[4] = !m_blocks[x][y - 1][z];
                         if (y < CHUNK_SIZE - 1) visible[5] = !m_blocks[x][y + 1][z];
 
-                        makeCube(vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible);
+                        makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible);
 
                         for (int i = 0; i < 6; i++) total += visible[i] ? 1 : 0;
                     }
@@ -131,10 +129,22 @@ void Chunk::buildMesh()
             }
         }
         //std::cout << "Faces: " << total << std::endl;
-        m_vertexCount = vertices.size() / 5;
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
+        m_vertexCount = m_vertices.size() / 5;
         m_dirty = false;
+        m_glDirty = true;
         m_empty = total == 0;
+
+        //bufferData();
+    }
+}
+
+void Chunk::bufferData()
+{
+    if (m_glDirty)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
+        m_glDirty = false;
     }
 }
 
