@@ -61,6 +61,7 @@ void Game::run()
         for (const auto &chunk : m_toErase)
         {
             m_chunks.erase(chunk);
+            m_loadedChunks.erase(chunk);
         }
         m_toErase.clear();
 
@@ -186,7 +187,8 @@ void Game::processInput(float dt)
 
 void Game::updateChunk(Chunk *chunk)
 {
-    if (glm::distance(chunk->getCenter(), m_camera.getPos()) > 90)
+    //if (glm::distance(chunk->getCenter(), m_camera.getPos()) > 90)
+    if (glm::distance(chunk->getCenter(), m_camera.getPos()) > 120)
     {
         m_toErase.push_back(chunk->getCoords());
         return;
@@ -210,13 +212,14 @@ void Game::loadChunks()
             for (int z = -m_renderDistance; z <= m_renderDistance; z++)
             {
                 glm::ivec3 coords = current + glm::ivec3(x, y, z);
-                if (m_processed.hasChunk(coords)) 
+                if (m_loadedChunks.find(coords) != m_loadedChunks.end()) 
                     continue;
 
                 auto chunk = m_chunks.find(coords);
                 if (chunk == m_chunks.end())
                 {
                     Chunk *c = new Chunk(coords);
+                    m_loadedChunks.insert(coords);
                     auto lambda = [c, this]() -> void
                     {
                         makeTerrain(*c);

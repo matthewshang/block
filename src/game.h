@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <vector>
 
 #include <glad/glad.h>
@@ -30,8 +31,9 @@ private:
     void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 
-    const int m_renderDistance = 2;
+    const int m_renderDistance = 4;
     std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> m_chunks;
+    std::set<glm::ivec3, ChunkCompare> m_loadedChunks;
     ChunkList m_processed;
     std::vector<glm::ivec3> m_toErase;
     ThreadPool m_pool;
