@@ -7,7 +7,9 @@ namespace Blocks
         Air,
         Stone,
         Dirt,
-        Grass
+        Grass,
+        Bedrock,
+        Sand
     };
 
     extern int faces[256][6];

@@ -11,6 +11,7 @@ public:
     void generate(Chunk &c);
 
 private:
+    double getHeight(double x, double z);
 
     Perlin m_highNoise;
     Perlin m_lowNoise;

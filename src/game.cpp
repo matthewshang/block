@@ -13,7 +13,7 @@
 #include "shader.h"
 #include "texture.h"
 
-Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(0.0f, 40.0f, 2.0f)), 
+Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(55.0f, 67.0f, 205.0f)), 
 m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed()
 {
     initChunks();
@@ -107,10 +107,14 @@ void Game::run()
         nFrames++;
         if (current - lastTime > 1.0f)
         {
+            glm::vec3 toChunk = m_camera.getPos() / 16.0f;
+            int x = static_cast<int>(std::floorf(toChunk.x));
+            int y = static_cast<int>(std::floorf(toChunk.y));
+            int z = static_cast<int>(std::floorf(toChunk.z));
             char title[256];
             title[255] = '\0';
-            snprintf(title, 255, "block - [FPS: %d] [%d chunks] [%d jobs queued] [pos: %f, %f, %f]", nFrames, m_chunks.size(), m_pool.getJobsAmount(),
-                m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z);
+            snprintf(title, 255, "block - [FPS: %d] [%d chunks] [%d jobs queued] [pos: %f, %f, %f] [chunk: %d %d %d]", nFrames, m_chunks.size(), m_pool.getJobsAmount(),
+                m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z, x, y, z);
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
             nFrames = 0;

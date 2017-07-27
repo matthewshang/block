@@ -6,6 +6,7 @@
 class Perlin
 {
 public:
+    Perlin::Perlin();
     Perlin::Perlin(int octaves, double frequency, double amplitude, double lacunarity, double persistence);
 
     double perlin3(double x, double y, double z);
