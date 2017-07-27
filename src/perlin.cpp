@@ -4,7 +4,9 @@
 
 #include <cmath>
 
-Perlin::Perlin()
+Perlin::Perlin(int octaves, double frequency, double amplitude, double lacunarity, double persistence) :
+    m_octaves(octaves), m_frequency(frequency), m_amplitude(amplitude), m_lacunarity(lacunarity),
+    m_persistence(persistence)
 {
     m_p = {
         151,160,137,91,90,15,
@@ -25,22 +27,21 @@ Perlin::Perlin()
     m_p.insert(m_p.end(), m_p.begin(), m_p.end());
 }
 
-double Perlin::perlin3(double x, double y, double z, int octaves, double persistence)
+double Perlin::perlin3(double x, double y, double z)
 {
     double total = 0;
-    double frequency = 1;
-    double amplitude = 1;
-    double maxValue = 0;
-    for (int i = 0; i < octaves; i++)
+    double frequency = m_frequency;
+    double amplitude = m_amplitude;
+
+    for (int i = 0; i < m_octaves; i++)
     {
         total += noise3(x * frequency, y * frequency, z * frequency) * amplitude;
 
-        maxValue += amplitude;
-        amplitude *= persistence;
-        frequency *= 2;
+        amplitude *= m_persistence;
+        frequency *= m_lacunarity;
     }
 
-    return total / maxValue;
+    return total;
 }
 
 static double fade(double t)
@@ -94,12 +95,13 @@ double Perlin::noise3(double x, double y, double z)
     int A = m_p[X    ] + Y, AA = m_p[A] + Z, AB = m_p[A + 1] + Z,
         B = m_p[X + 1] + Y, BA = m_p[B] + Z, BB = m_p[B + 1] + Z;
 
-    return lerp(w, lerp(v, lerp(u, grad(m_p[AA    ], x    , y,     z    ),
-                                   grad(m_p[BA    ], x - 1, y,     z    )),
-                           lerp(u, grad(m_p[AB    ], x    , y - 1, z    ),
-                                   grad(m_p[BB    ], x - 1, y - 1, z    ))),
-                   lerp(v, lerp(u, grad(m_p[AA + 1], x    , y    , z - 1),
-                                   grad(m_p[BA + 1], x - 1, y    , z - 1)),
-                           lerp(u, grad(m_p[AB + 1], x    , y - 1, z - 1),
-                                   grad(m_p[BB + 1], x - 1, y - 1, z - 1))));
+    double n = lerp(w, lerp(v, lerp(u, grad(m_p[AA    ], x    , y,     z    ),
+                                       grad(m_p[BA    ], x - 1, y,     z    )),
+                               lerp(u, grad(m_p[AB    ], x    , y - 1, z    ),
+                                       grad(m_p[BB    ], x - 1, y - 1, z    ))),
+                       lerp(v, lerp(u, grad(m_p[AA + 1], x    , y    , z - 1),
+                                       grad(m_p[BA + 1], x - 1, y    , z - 1)),
+                               lerp(u, grad(m_p[AB + 1], x    , y - 1, z - 1),
+                                       grad(m_p[BB + 1], x - 1, y - 1, z - 1))));
+    return (n + 1) / 2;
 }

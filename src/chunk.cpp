@@ -90,7 +90,6 @@ void makeCube(std::vector<float> &vertices, float x, float y, float z, bool face
     };
 
     float s = 1.0f / 16.0f;
-    
 
     for (int i = 0; i < 6; i++)
     {
@@ -124,7 +123,7 @@ void Chunk::buildMesh()
             {
                 for (int z = 0; z < CHUNK_SIZE; z++)
                 {
-                    if (m_blocks[x][y][z] != 0)
+                    if (m_blocks[x][y][z] != Blocks::Air)
                     {
                         bool visible[6] = { true, true, true, true, true, true };
                         if (z > 0)              visible[0] = !m_blocks[x][y][z - 1];

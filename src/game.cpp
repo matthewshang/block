@@ -14,7 +14,7 @@
 #include "texture.h"
 
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(0.0f, 40.0f, 2.0f)), 
-m_lastX(960), m_lastY(540), m_firstMouse(true), m_noise(), m_processed()
+m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed()
 {
     initChunks();
 }
@@ -221,7 +221,7 @@ void Game::loadChunks()
                 m_loadedChunks.insert(coords);
                 auto lambda = [c, this]() -> void
                 {
-                    makeTerrain(*c);
+                    m_chunkGenerator.generate(*c);
                     c->buildMesh();
                     std::unique_ptr<Chunk> ptr(c);
                     m_processed.push(ptr);
@@ -230,64 +230,6 @@ void Game::loadChunks()
             }
         }
     }
-}
-
-void Game::makeTerrain(Chunk &c)
-{
-    const glm::ivec3 &coords = c.getCoords();
-    auto start = std::chrono::high_resolution_clock::now();
-
-    for (int x = 0; x < CHUNK_SIZE; x++)
-    {
-        for (int y = 0; y < CHUNK_SIZE; y++)
-        {
-            for (int z = 0; z < CHUNK_SIZE; z++)
-            {
-                int rx = coords.x * 16 + x;
-                int ry = coords.y * 16 + y;
-                int rz = coords.z * 16 + z;
-
-                double p = m_noise.noise3(
-                    static_cast<double>(rx) * 0.07,
-                    static_cast<double>(ry) * 0.07,
-                    static_cast<double>(rz) * 0.07);
-
-                double depth = 1.0 - std::max(0.0, std::min((static_cast<double>(ry) + 64.0) / 128.0, 1.0));
-
-                p = p * 0.25 + depth * 0.75;
-                 
-                if (p < 0.3 && p > 0.2)
-                {
-                    c.setBlock(x, y, z, Blocks::Dirt);
-                }
-                else if (p > 0.3)
-                {
-                    c.setBlock(x, y, z, Blocks::Stone);
-                }
-            }
-        }
-    }
-
-    for (int x = 0; x < CHUNK_SIZE; x++)
-    {
-        for (int z = 0; z < CHUNK_SIZE; z++)
-        {
-            for (int y = CHUNK_SIZE - 1; y >= 0; y--)
-            {
-                if (c.getBlock(x, y, z) == Blocks::Dirt)
-                {
-                    c.setBlock(x, y, z, Blocks::Grass);
-                    break;
-                }
-            }
-        }
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    auto diff = end - start;
-    auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(diff);
-    //std::cout << "average: " << nano.count() / 4096 << "ns" << std::endl;
 }
 
 void Game::initChunks()
@@ -299,7 +241,7 @@ void Game::initChunks()
 
     glm::ivec3 p(x, y, z);
     std::unique_ptr<Chunk> c = std::make_unique<Chunk>(p);
-    makeTerrain(*c);
+    m_chunkGenerator.generate(*c);
     m_chunks.insert(std::make_pair(p, std::move(c)));
 }
 

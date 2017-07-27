@@ -13,7 +13,7 @@
 #include "chunk.h"
 #include "chunkcompare.h"
 #include "chunklist.h"
-#include "perlin.h"
+#include "terraingenerator.h"
 #include "threadpool.h"
 
 class Game
@@ -24,20 +24,19 @@ public:
     void run();
 
 private:
-    void makeTerrain(Chunk &c);
     void processInput(float dt);
     void updateChunk(Chunk *chunk);
     void loadChunks();
     void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 
-    const int m_renderDistance = 1;
+    const int m_renderDistance = 2;
     std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> m_chunks;
     std::set<glm::ivec3, ChunkCompare> m_loadedChunks;
     ChunkList m_processed;
     std::vector<glm::ivec3> m_toErase;
     ThreadPool m_pool;
-    Perlin m_noise;
+    TerrainGenerator m_chunkGenerator;
 
     GLFWwindow *m_window;
     Camera m_camera;
