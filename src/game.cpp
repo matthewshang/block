@@ -17,6 +17,7 @@ Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(55.0f, 67.
 m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed()
 {
     initChunks();
+    m_eraseDistance = sqrtf(3 * (pow(16 * m_renderDistance, 2))) + 32;
 }
 
 void Game::run()
@@ -193,8 +194,7 @@ void Game::processInput(float dt)
 
 void Game::updateChunk(Chunk *chunk)
 {
-    //if (glm::distance(chunk->getCenter(), m_camera.getPos()) > 90)
-    if (glm::distance(chunk->getCenter(), m_camera.getPos()) > 120)
+    if (glm::distance(chunk->getCenter(), m_camera.getPos()) > m_eraseDistance)
     {
         m_toErase.push_back(chunk->getCoords());
         return;
