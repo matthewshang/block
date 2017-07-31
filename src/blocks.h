@@ -9,7 +9,9 @@ namespace Blocks
         Dirt,
         Grass,
         Bedrock,
-        Sand
+        Sand,
+        Log,
+        Leaves
     };
 
     extern int faces[256][6];

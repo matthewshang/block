@@ -7,10 +7,13 @@
 #include "blocks.h"
 
 TerrainGenerator::TerrainGenerator() :
-    m_highNoise(2, 0.023, 14, 2, 0.5), m_lowNoise(2, 0.017, 5, 2, 0.9)
+    m_highNoise(2, 0.023, 14, 2, 0.5), m_lowNoise(2, 0.017, 5, 2, 0.9),
+    m_trees(2, 1.71, 1, 2, 0.7)
 {
     
 }
+
+bool canPutTree(int x, int y, int z);
 
 void TerrainGenerator::generate(Chunk &c)
 {
@@ -45,7 +48,7 @@ void TerrainGenerator::generate(Chunk &c)
                 }
                 else
                 {
-                    if (ry < h && ry > h - 4)
+                    if (ry < h && ry > h - 2)
                     {
                         c.setBlock(x, y, z, Blocks::Dirt);
                     }
@@ -56,7 +59,40 @@ void TerrainGenerator::generate(Chunk &c)
                 }
                 ry++;
             }
+
+            if (canPutTree(x, dh, z) && m_trees.perlin3(rx, ry, rz) > 0.8)
+            {
+                putTree(c, x, dh, z);
+            }
         }
+    }
+}
+
+static bool canPutTree(int x, int y, int z)
+{
+    return y < 9 && x > 2 && x < 13 && z > 2 && z < 13;
+}
+
+void TerrainGenerator::putTree(Chunk &c, int x, int y, int z)
+{
+    for (int ty = 0; ty < 5; ty++)
+    {
+        for (int tx = -3; tx < 3; tx++)
+        {
+            for (int tz = -3; tz < 3; tz++)
+            {
+                int d = tx * tx + (ty - 1) * (ty - 1) + tz * tz;
+                if (d < 9)
+                {
+                    c.setBlock(x + tx, y + ty + 3, z + tz, Blocks::Leaves);
+                }
+            }
+        }
+    }
+
+    for (int ty = 0; ty < 5; ty++)
+    {
+        c.setBlock(x, y + ty, z, Blocks::Log);
     }
 }
 

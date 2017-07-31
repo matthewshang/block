@@ -13,7 +13,7 @@
 #include "shader.h"
 #include "texture.h"
 
-Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(55.0f, 67.0f, 205.0f)), 
+Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-90, 64, 0)), 
 m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed()
 {
     initChunks();
@@ -24,10 +24,7 @@ void Game::run()
 {
     Shader shader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl");
 
-    //Texture texture1("../res/textures/grass.jpg", GL_RGB);
     Texture texture1("../res/textures/terrain.png", GL_RGBA);
-
-    //Chunk chunk(ChunkCoord(0, 0, 0));
 
     glEnable(GL_DEPTH_TEST);
 
