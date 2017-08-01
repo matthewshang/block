@@ -11,10 +11,14 @@ namespace Blocks
         Bedrock,
         Sand,
         Log,
-        Leaves
+        Leaves,
+        RedFlower,
+        YellowFlower,
+        GrassPlant
     };
 
     extern int faces[256][6];
 
     bool isTransparent(int type);
+    bool isPlant(int type);
 }

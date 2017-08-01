@@ -1,6 +1,7 @@
 #include "terraingenerator.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include <glm/glm.hpp>
 
@@ -8,7 +9,8 @@
 
 TerrainGenerator::TerrainGenerator() :
     m_highNoise(2, 0.023, 14, 2, 0.5), m_lowNoise(2, 0.017, 5, 2, 0.9),
-    m_trees(2, 1.71, 1, 2, 0.7)
+    m_trees(2, 1.71, 1, 2, 0.7), m_flowers(2, 0.1, 1, 2, 0.7),
+    m_grass(2, 0.1, 1, 2, 0.8)
 {
     
 }
@@ -64,6 +66,22 @@ void TerrainGenerator::generate(Chunk &c)
             {
                 putTree(c, x, dh, z);
             }
+            else if (dh < 15)
+            {
+                if (m_grass.perlin3(-rx, ry, -rz) > 0.4)
+                {
+                    c.setBlock(x, dh, z, Blocks::GrassPlant);
+                }
+                else
+                {
+                    double flower = m_flowers.perlin3(rx, ry, rz);
+                    if (flower > 0.65)
+                    {
+                        double type = m_flowers.noise3(rx + 0.27, -ry, rz + 0.31);
+                        c.setBlock(x, dh, z, type > 0 ? Blocks::YellowFlower : Blocks::RedFlower);
+                    }
+                }
+            } 
         }
     }
 }

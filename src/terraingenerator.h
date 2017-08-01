@@ -17,4 +17,6 @@ private:
     Perlin m_highNoise;
     Perlin m_lowNoise;
     Perlin m_trees;
+    Perlin m_flowers;
+    Perlin m_grass;
 };

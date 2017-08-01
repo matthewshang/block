@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "blocks.h"
 
 const int Chunk::opposites[6] = {
@@ -110,6 +113,43 @@ void makeCube(std::vector<float> &vertices, float x, float y, float z, bool face
     }
 }
 
+void makePlant(std::vector<float> &vertices, float x, float y, float z, int type)
+{
+    static const glm::vec3 positions[2][4] = {
+        { glm::vec3(0.5f,  0.5f,  0.0f), glm::vec3(0.5f, -0.5f,  0.0f), glm::vec3(-0.5f, -0.5f,  0.0f), glm::vec3(-0.5f,  0.5f,  0.0f) },
+        { glm::vec3(0.0f,  0.5f,  0.5f), glm::vec3(0.0f, -0.5f,  0.5f), glm::vec3(0.0f, -0.5f, -0.5f), glm::vec3(0.0f,  0.5f, -0.5f) }
+    };
+
+    static const glm::vec2 texcoords[4] = {
+        glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f)
+    };
+
+    static const int indices[6] = {
+        0, 1, 2, 0, 2, 3
+    };
+
+    glm::mat4 model;
+    model = glm::rotate(model, 45.0f, glm::vec3(0, 1, 0));
+
+    float s = 1.0f / 16.0f;
+    for (int i = 0; i < 2; i++)
+    {
+        int idx = Blocks::faces[type][i];
+        float tu = s * static_cast<float>(idx % 16);
+        float tv = 1.0f - s * static_cast<float>(idx / 16) - s;
+        for (int v = 0; v < 6; v++)
+        {
+            int j = indices[v];
+            glm::vec4 pos = model * glm::vec4(positions[i][j], 1.0f);
+            vertices.push_back(pos.x + x);
+            vertices.push_back(pos.y + y);
+            vertices.push_back(pos.z + z);
+            vertices.push_back(tu + texcoords[j].x * s);
+            vertices.push_back(tv + texcoords[j].y * s);
+        }
+    }
+}
+
 void Chunk::buildMesh()
 {
     if (m_dirty)
@@ -133,8 +173,16 @@ void Chunk::buildMesh()
                         if (y > 0)              visible[4] = Blocks::isTransparent(m_blocks[x][y - 1][z]);
                         if (y < CHUNK_SIZE - 1) visible[5] = Blocks::isTransparent(m_blocks[x][y + 1][z]);
 
-                        makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible,
-                            m_blocks[x][y][z]);
+                        if (Blocks::isPlant(m_blocks[x][y][z]))
+                        {
+                            makePlant(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, 
+                                m_blocks[x][y][z]);
+                        }
+                        else
+                        {
+                            makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible,
+                                m_blocks[x][y][z]);
+                        }
 
                         for (int i = 0; i < 6; i++) total += visible[i] ? 1 : 0;
                     }

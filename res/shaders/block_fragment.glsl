@@ -8,8 +8,8 @@ uniform sampler2D texture1;
 
 void main()
 {
-    vec3 texColor = vec3(texture(texture1, TexCoord));
-    if (texColor == vec3(0.0, 0.0, 0.0))
+    vec4 texColor = texture(texture1, TexCoord);
+    if (texColor.a < 0.1)
         discard;
-    FragColor = vec4(texColor, 1.0);
+    FragColor = texColor;
 }
