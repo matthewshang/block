@@ -126,12 +126,12 @@ void Chunk::buildMesh()
                     if (m_blocks[x][y][z] != Blocks::Air)
                     {
                         bool visible[6] = { true, true, true, true, true, true };
-                        if (z > 0)              visible[0] = !m_blocks[x][y][z - 1];
-                        if (z < CHUNK_SIZE - 1) visible[1] = !m_blocks[x][y][z + 1];
-                        if (x > 0)              visible[2] = !m_blocks[x - 1][y][z];
-                        if (x < CHUNK_SIZE - 1) visible[3] = !m_blocks[x + 1][y][z];
-                        if (y > 0)              visible[4] = !m_blocks[x][y - 1][z];
-                        if (y < CHUNK_SIZE - 1) visible[5] = !m_blocks[x][y + 1][z];
+                        if (z > 0)              visible[0] = Blocks::isTransparent(m_blocks[x][y][z - 1]);
+                        if (z < CHUNK_SIZE - 1) visible[1] = Blocks::isTransparent(m_blocks[x][y][z + 1]);
+                        if (x > 0)              visible[2] = Blocks::isTransparent(m_blocks[x - 1][y][z]);
+                        if (x < CHUNK_SIZE - 1) visible[3] = Blocks::isTransparent(m_blocks[x + 1][y][z]);
+                        if (y > 0)              visible[4] = Blocks::isTransparent(m_blocks[x][y - 1][z]);
+                        if (y < CHUNK_SIZE - 1) visible[5] = Blocks::isTransparent(m_blocks[x][y + 1][z]);
 
                         makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible,
                             m_blocks[x][y][z]);

@@ -15,4 +15,6 @@ namespace Blocks
     };
 
     extern int faces[256][6];
+
+    bool isTransparent(int type);
 }

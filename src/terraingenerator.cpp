@@ -75,7 +75,7 @@ static bool canPutTree(int x, int y, int z)
 
 void TerrainGenerator::putTree(Chunk &c, int x, int y, int z)
 {
-    for (int ty = 0; ty < 5; ty++)
+    for (int ty = 0; ty < 4; ty++)
     {
         for (int tx = -3; tx < 3; tx++)
         {

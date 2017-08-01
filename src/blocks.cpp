@@ -10,3 +10,15 @@ int Blocks::faces[256][6] = {
     { 20, 20, 20, 20, 21, 21 },   // Log
     { 52, 52, 52, 52, 52, 52 },   // Leaves
 };
+
+bool Blocks::isTransparent(int type)
+{
+    switch (type)
+    {
+    case Air:
+    case Leaves:
+        return true;
+    default:
+        return false;
+    }
+}
