@@ -3,6 +3,7 @@
 out vec4 FragColor;
 
 in vec2 TexCoord;
+in float frag_light;
 
 uniform sampler2D texture1;
 
@@ -11,5 +12,5 @@ void main()
     vec4 texColor = texture(texture1, TexCoord);
     if (texColor.a < 0.1)
         discard;
-    FragColor = texColor;
+    FragColor = texColor * frag_light;
 }

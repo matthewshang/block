@@ -84,6 +84,13 @@ void TerrainGenerator::generate(Chunk &c)
             } 
         }
     }
+
+    if (coords == glm::ivec3(-6, 3, -2))
+    {
+        c.setBlock(8, 0, 4, Blocks::Glowstone);
+        c.setBlock(1, 0, 4, Blocks::Glowstone);
+
+    }
 }
 
 static bool canPutTree(int x, int y, int z)

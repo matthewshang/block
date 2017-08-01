@@ -30,7 +30,7 @@ private:
     void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 
-    const int m_renderDistance = 2;
+    const int m_renderDistance = 0;
     float m_eraseDistance;
     std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> m_chunks;
     std::set<glm::ivec3, ChunkCompare> m_loadedChunks;

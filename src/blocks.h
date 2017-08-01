@@ -14,11 +14,13 @@ namespace Blocks
         Leaves,
         RedFlower,
         YellowFlower,
-        GrassPlant
+        GrassPlant,
+        Glowstone
     };
 
     extern int faces[256][6];
 
     bool isTransparent(int type);
     bool isPlant(int type);
+    bool isLight(int type);
 }

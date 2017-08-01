@@ -18,12 +18,17 @@ public:
 
     void buildMesh();
     void bufferData();
+    void calcLighting();
 
     void bind();
     int getVertexCount();
     bool isEmpty();
     void setBlock(int x, int y, int z, uint8_t type);
     uint8_t getBlock(int x, int y, int z);
+    void setSunlight(int x, int y, int z, int val);
+    int getSunlight(int x, int y, int z);
+    void setLight(int x, int y, int z, int val);
+    int getLight(int x, int y, int z);
 
     const glm::ivec3 &getCoords() { return m_pos; };
     const glm::vec3 &getCenter() { return m_worldCenter; };
@@ -41,5 +46,6 @@ private:
     glm::ivec3 m_pos;
     glm::vec3 m_worldCenter;
     uint8_t m_blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    uint8_t m_lightmap[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
     std::vector<float> m_vertices;
 };

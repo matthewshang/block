@@ -1,6 +1,7 @@
 #include "chunk.h"
 
 #include <iostream>
+#include <queue>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -11,7 +12,8 @@ const int Chunk::opposites[6] = {
     1, 0, 3, 2, 5, 4
 };
 
-Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(true), m_glDirty(true), m_vertices()
+Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(true), m_glDirty(true), m_vertices(),
+    m_lightmap{}
 {
     m_worldCenter = glm::vec3(pos.x * 16 + 8, pos.y * 16 + 8, pos.z * 16 + 8);
 
@@ -23,10 +25,12 @@ Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(true), m_glDirty(true), m_ver
     buildMesh();
     bufferData();
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
 }
@@ -63,7 +67,27 @@ uint8_t Chunk::getBlock(int x, int y, int z)
     return m_blocks[x][y][z];
 }
 
-void makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6], int type)
+void Chunk::setSunlight(int x, int y, int z, int val)
+{
+    m_lightmap[x][y][z] = (m_lightmap[x][y][z] & 0xF) | (val << 4);
+}
+
+int Chunk::getSunlight(int x, int y, int z)
+{
+    return (m_lightmap[x][y][z] >> 4) & 0xF;
+}
+
+void Chunk::setLight(int x, int y, int z, int val)
+{
+    m_lightmap[x][y][z] = (m_lightmap[x][y][z] & 0xF0) | val;
+}
+
+int Chunk::getLight(int x, int y, int z)
+{
+    return (m_lightmap[x][y][z]) & 0xF;
+}
+
+void makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6], int type, int light)
 {
     static const glm::vec3 positions[6][4] = {
         { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3(-0.5f,  0.5f, -0.5f) },
@@ -109,11 +133,13 @@ void makeCube(std::vector<float> &vertices, float x, float y, float z, bool face
             vertices.push_back(positions[i][j].z + z);
             vertices.push_back(tu + texcoords[i][j].x * s);
             vertices.push_back(tv + texcoords[i][j].y * s);
+            float lightVal = (static_cast<float>(light) + 1.0f) / 16.0f;
+            vertices.push_back(lightVal);
         }
     }
 }
 
-void makePlant(std::vector<float> &vertices, float x, float y, float z, int type)
+void makePlant(std::vector<float> &vertices, float x, float y, float z, int type, int light)
 {
     static const glm::vec3 positions[2][4] = {
         { glm::vec3(0.5f,  0.5f,  0.0f), glm::vec3(0.5f, -0.5f,  0.0f), glm::vec3(-0.5f, -0.5f,  0.0f), glm::vec3(-0.5f,  0.5f,  0.0f) },
@@ -146,6 +172,7 @@ void makePlant(std::vector<float> &vertices, float x, float y, float z, int type
             vertices.push_back(pos.z + z);
             vertices.push_back(tu + texcoords[j].x * s);
             vertices.push_back(tv + texcoords[j].y * s);
+            vertices.push_back((static_cast<float>(light) + 1.0f) / 16.0f);
         }
     }
 }
@@ -176,12 +203,12 @@ void Chunk::buildMesh()
                         if (Blocks::isPlant(m_blocks[x][y][z]))
                         {
                             makePlant(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, 
-                                m_blocks[x][y][z]);
+                                m_blocks[x][y][z], getLight(x, y, z));
                         }
                         else
                         {
                             makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible,
-                                m_blocks[x][y][z]);
+                                m_blocks[x][y][z], getLight(x, y, z));
                         }
 
                         for (int i = 0; i < 6; i++) total += visible[i] ? 1 : 0;
@@ -190,7 +217,7 @@ void Chunk::buildMesh()
             }
         }
         //std::cout << "Faces: " << total << std::endl;
-        m_vertexCount = m_vertices.size() / 5;
+        m_vertexCount = m_vertices.size() / 6;
         m_dirty = false;
         m_glDirty = true;
         m_empty = total == 0;
@@ -206,6 +233,60 @@ void Chunk::bufferData()
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
         glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
         m_glDirty = false;
+    }
+}
+
+struct LightNode
+{
+    LightNode(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _light)
+        : x(_x), y(_y), z(_z), light(_light) {};
+
+    uint8_t x, y, z, light;
+};
+
+void Chunk::calcLighting()
+{
+    if (!m_dirty)
+        return;
+
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int y = 0; y < CHUNK_SIZE; y++)
+        {
+            for (int z = 0; z < CHUNK_SIZE; z++)
+            {
+                if (Blocks::isLight(m_blocks[x][y][z]))
+                {
+                    std::queue<LightNode> lightQueue;
+                    lightQueue.emplace(x, y, z, 15);
+
+                    while (!lightQueue.empty())
+                    {
+                        LightNode &node = lightQueue.front();
+                        uint8_t x = node.x,
+                            y = node.y,
+                            z = node.z,
+                            light = node.light;
+                        lightQueue.pop();
+
+                        if (x < 0 || x > 15 || y < 0 || y > 15 || z < 0 || z > 15)
+                            continue;
+
+                        int val = getLight(x, y, z);
+                        if (getLight(x, y, z) >= light)
+                            continue;
+
+                        setLight(x, y, z, light--);
+                        lightQueue.emplace(x - 1, y, z, light);
+                        lightQueue.emplace(x + 1, y, z, light);
+                        lightQueue.emplace(x, y - 1, z, light); 
+                        lightQueue.emplace(x, y + 1, z, light);
+                        lightQueue.emplace(x, y, z - 1, light);
+                        lightQueue.emplace(x, y, z + 1, light);
+                    }
+                }
+            }
+        }
     }
 }
 
