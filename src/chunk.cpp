@@ -1,5 +1,6 @@
 #include "chunk.h"
 
+#include <chrono>
 #include <iostream>
 #include <queue>
 
@@ -7,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "blocks.h"
+#include "timer.h"
 
 const int Chunk::opposites[6] = {
     1, 0, 3, 2, 5, 4
@@ -193,11 +195,21 @@ void Chunk::compute(ChunkMap &chunks)
     if (!m_dirty)
         return;
 
+    Timer timer, lighting, meshing;
+    timer.start();
+
     ChunkData data;
     std::memset(data.lightMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
     std::memset(data.opaqueMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+
+    lighting.start();
     calcLighting(chunks, data);
+    //lighting.log("  Lighting time: ");
+    meshing.start();
     buildMesh(data);
+    //meshing.log("   Meshing time: ");
+
+    //timer.log("Compute time: ");
 }
 
 void Chunk::initBlocks()
@@ -228,7 +240,7 @@ void Chunk::getLights(glm::ivec3 &delta, std::queue<LightNode> &queue, ChunkData
                 int type = getBlock(x, y, z);
                 if (Blocks::isLight(type))
                 {
-                    queue.emplace(d.x + x, d.y + y, d.z + z, 15, type);
+                    queue.emplace(d.x + x, d.y + y, d.z + z, 15);
                 }
                 bool val = !Blocks::isLight(type) && !Blocks::isTransparent(type);
                 blocks.opaqueMap[d2.x + x][d2.y + y][d2.z + z] = val;
@@ -239,6 +251,8 @@ void Chunk::getLights(glm::ivec3 &delta, std::queue<LightNode> &queue, ChunkData
 
 void Chunk::calcLighting(ChunkMap &chunks, ChunkData &data)
 {
+    Timer t_queue;
+
     std::queue<LightNode> lightQueue;
     for (int a = -1; a < 2; a++)
     {
@@ -261,6 +275,7 @@ void Chunk::calcLighting(ChunkMap &chunks, ChunkData &data)
         }
     }
 
+    t_queue.start();
     const int MIN = -CHUNK_SIZE;
     const int MAX = 2 * CHUNK_SIZE - 1;
 
@@ -270,8 +285,7 @@ void Chunk::calcLighting(ChunkMap &chunks, ChunkData &data)
         int x = node.x,
             y = node.y,
             z = node.z,
-            light = node.light,
-            type = node.type;
+            light = node.light;
         lightQueue.pop();
 
         if (x < MIN || x > MAX || y < MIN || y > MAX || z < MIN || z > MAX)
@@ -285,13 +299,14 @@ void Chunk::calcLighting(ChunkMap &chunks, ChunkData &data)
             continue;
 
         data.lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE] = light--;
-        lightQueue.emplace(x - 1, y, z, light, type);
-        lightQueue.emplace(x + 1, y, z, light, type);
-        lightQueue.emplace(x, y - 1, z, light, type);
-        lightQueue.emplace(x, y + 1, z, light, type);
-        lightQueue.emplace(x, y, z - 1, light, type);
-        lightQueue.emplace(x, y, z + 1, light, type);
+        lightQueue.emplace(x - 1, y, z, light);
+        lightQueue.emplace(x + 1, y, z, light);
+        lightQueue.emplace(x, y - 1, z, light);
+        lightQueue.emplace(x, y + 1, z, light);
+        lightQueue.emplace(x, y, z - 1, light);
+        lightQueue.emplace(x, y, z + 1, light);
     }
+    t_queue.log("prop time: ");
 
     for (int x = 0; x < CHUNK_SIZE; x++)
     {

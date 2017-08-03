@@ -168,25 +168,24 @@ void Game::processInput(float dt)
 
     m_camera.processMouse(dx, dy);
 
-    //if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
-    //    glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    //{
-    //    const glm::vec3 &pos = m_camera.getPos();
-    //    Chunk *c = chunkFromWorld(pos);
-    //    if (c != nullptr)
-    //    {
-    //        const ChunkCoord &coords = c->getCoords();
-    //        std::cout << coords.x << ", " << coords.y << ", " << coords.z << std::endl;
-
-    //        glm::vec3 local = pos - glm::vec3(coords.getXWorld(), coords.getYWorld(), coords.getZWorld());
-    //        local = glm::floor(local);
-    //        bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    //        c->setBlock(static_cast<int>(local.x), 
-    //                    static_cast<int>(local.y),
-    //                    static_cast<int>(local.z), left ? 0 : 1);
-
-    //    }
-    //}
+    if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
+        glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    {
+        const glm::vec3 &pos = m_camera.getPos();
+        Chunk *c = chunkFromWorld(pos);
+        if (c != nullptr)
+        {
+            glm::vec3 a = glm::floor(pos);
+            glm::ivec3 local(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(a.z));
+            local = glm::ivec3((local.x % 16 + 16) % 16, (local.y % 16 + 16) % 16, (local.z % 16 + 16) % 16);
+            std::cout << "place: " << local.x << ", " << local.y << ", " << local.z << std::endl;
+            bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+            c->setBlock(local.x, 
+                        local.y,
+                        local.z, left ? 0 : Blocks::Glowstone);
+            dirtyChunks(c->getCoords());
+        }
+    }
 }
 
 void Game::updateChunk(Chunk *chunk)
@@ -199,6 +198,22 @@ void Game::updateChunk(Chunk *chunk)
 
     chunk->compute(m_chunks);
     chunk->bufferData();
+}
+
+void Game::dirtyChunks(glm::ivec3 center)
+{
+    for (int x = -1; x < 2; x++)
+    {
+        for (int y = -1; y < 2; y++)
+        {
+            for (int z = -1; z < 2; z++)
+            {
+                auto neighbor = m_chunks.find(center + glm::ivec3(x, y, z));
+                if (neighbor != m_chunks.end())
+                    neighbor->second->dirty();
+            }
+        }
+    }
 }
 
 void Game::loadChunks()

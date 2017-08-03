@@ -15,9 +15,9 @@ public:
     void push(std::unique_ptr<Chunk> &c);
     bool hasChunk(const glm::ivec3 &coords);
     int size();
-    void moveChunks(std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> &chunks);
+    void moveChunks(ChunkMap &chunks);
 
 private:
-    std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> m_chunks;
+   ChunkMap m_chunks;
     std::shared_mutex m_mutex;
 };

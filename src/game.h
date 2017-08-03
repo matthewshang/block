@@ -25,6 +25,7 @@ public:
 private:
     void processInput(float dt);
     void updateChunk(Chunk *chunk);
+    void dirtyChunks(glm::ivec3 center);
     void loadChunks();
     void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);

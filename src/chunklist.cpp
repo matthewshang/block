@@ -25,7 +25,7 @@ int ChunkList::size()
     return size;
 }
 
-void ChunkList::moveChunks(std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare>& chunks)
+void ChunkList::moveChunks(ChunkMap& chunks)
 {
     std::unique_lock<std::shared_mutex> lock(m_mutex);
 
@@ -34,10 +34,31 @@ void ChunkList::moveChunks(std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCom
         for (auto& c : m_chunks)
         {
             c.second->bufferData();
-            chunks.insert(std::make_pair(c.first, std::move(c.second)));
+            glm::ivec3 coords = c.first;
+            chunks.insert(std::make_pair(coords, std::move(c.second)));
+
+            for (int x = -1; x < 2; x++)
+            {
+                for (int y = -1; y < 2; y++)
+                {
+                    for (int z = -1; z < 2; z++)
+                    {
+                        auto neighbor = chunks.find(coords + glm::ivec3(x, y, z));
+                        if (neighbor != chunks.end())
+                        {
+                            neighbor->second->dirty();
+                        }
+                        else
+                        {
+                            neighbor = m_chunks.find(coords + glm::ivec3(x, y, z));
+                            if (neighbor != m_chunks.end())
+                                neighbor->second->dirty();
+                        }
+                    }
+                }
+            }
         }
 
-        //std::cout << "ChunkList size: " << m_chunks.size() << std::endl;
         m_chunks.clear();
     }
 }

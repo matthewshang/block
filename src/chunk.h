@@ -27,6 +27,7 @@ public:
     void compute(ChunkMap &chunks);
 
     void bind();
+    void dirty() { m_dirty = true; };
     int getVertexCount();
     bool isEmpty();
     void setBlock(int x, int y, int z, uint8_t type);
@@ -50,10 +51,10 @@ private:
 
     struct LightNode
     {
-        LightNode(int _x, int _y, int _z, int _light, int type)
-            : x(_x), y(_y), z(_z), light(_light), type(type) {};
+        LightNode(int _x, int _y, int _z, int _light)
+            : x(_x), y(_y), z(_z), light(_light) {};
 
-        int x, y, z, type;
+        int x, y, z;
         uint8_t light;
     };
 
