@@ -1,7 +1,5 @@
 #pragma once
 
-#include <map>
-#include <memory>
 #include <mutex>
 #include <set>
 #include <vector>
@@ -13,6 +11,7 @@
 #include "chunk.h"
 #include "chunkcompare.h"
 #include "chunklist.h"
+#include "common.h"
 #include "terraingenerator.h"
 #include "threadpool.h"
 
@@ -30,9 +29,9 @@ private:
     void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 
-    const int m_renderDistance = 0;
+    const int m_renderDistance = 1;
     float m_eraseDistance;
-    std::map<glm::ivec3, std::unique_ptr<Chunk>, ChunkCompare> m_chunks;
+    ChunkMap m_chunks;
     std::set<glm::ivec3, ChunkCompare> m_loadedChunks;
     ChunkList m_processed;
     std::vector<glm::ivec3> m_toErase;

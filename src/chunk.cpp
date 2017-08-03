@@ -238,16 +238,104 @@ void Chunk::bufferData()
 
 struct LightNode
 {
-    LightNode(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _light)
-        : x(_x), y(_y), z(_z), light(_light) {};
+    LightNode(int _x, int _y, int _z, int _light, int type)
+        : x(_x), y(_y), z(_z), light(_light), type(type) {};
 
-    uint8_t x, y, z, light;
+    int x, y, z, type;
+    uint8_t light;
 };
 
-void Chunk::calcLighting()
+struct BlockArray
+{
+    bool opaque[48][48][48];
+};
+
+static void getLights(Chunk &c, glm::ivec3 &delta, std::queue<LightNode> &queue, 
+    BlockArray &blocks)
+{
+    glm::ivec3 d = delta * 16;
+    glm::ivec3 d2 = (delta + 1) * 16;
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int y = 0; y < CHUNK_SIZE; y++)
+        {
+            for (int z = 0; z < CHUNK_SIZE; z++)
+            {
+                int type = c.getBlock(x, y, z);
+                if (Blocks::isLight(type))
+                {
+                    queue.emplace(d.x + x, d.y + y, d.z + z, 15, type);
+                }
+                bool val = !Blocks::isLight(type) && !Blocks::isTransparent(type);
+                blocks.opaque[d2.x + x][d2.y + y][d2.z + z] = val;
+            }
+        }
+    }
+}
+
+void Chunk::calcLighting(ChunkMap &chunks)
 {
     if (!m_dirty)
         return;
+
+    std::queue<LightNode> lightQueue;
+    uint8_t lightMap[3 * CHUNK_SIZE][3 * CHUNK_SIZE][3 * CHUNK_SIZE];
+    //bool opaque[3 * CHUNK_SIZE][3 * CHUNK_SIZE][3 * CHUNK_SIZE];
+    BlockArray blocks;
+    std::memset(lightMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+    std::memset(blocks.opaque, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+    const int MIN = -CHUNK_SIZE;
+    const int MAX = 2 * CHUNK_SIZE - 1;
+
+    for (int a = -1; a < 2; a++)
+    {
+        for (int b = -1; b < 2; b++)
+        {
+            for (int c = -1; c < 2; c++)
+            {
+                if (a == 0 && b == 0 && c == 0)
+                {
+                    getLights(*this, glm::ivec3(0), lightQueue, blocks);
+                    continue;
+                }
+                glm::ivec3 coords = m_pos + glm::ivec3(a, b, c);
+                auto neighbor = chunks.find(coords);
+                if (neighbor == chunks.end())
+                    continue;
+                
+                getLights(*neighbor->second, glm::ivec3(a, b, c), lightQueue, blocks);
+            }
+        }
+    }
+
+    while (!lightQueue.empty())
+    {
+        LightNode &node = lightQueue.front();
+        int x = node.x,
+            y = node.y,
+            z = node.z,
+            light = node.light,
+            type = node.type;
+        lightQueue.pop();
+
+        if (x < MIN || x > MAX || y < MIN || y > MAX || z < MIN || z > MAX)
+            continue;
+
+        int val = lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE];
+        if (val >= light)
+            continue;
+
+        //if (blocks.opaque[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE])
+        //    continue;
+
+        lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE] = light--;
+        lightQueue.emplace(x - 1, y, z, light, type);
+        lightQueue.emplace(x + 1, y, z, light, type);
+        lightQueue.emplace(x, y - 1, z, light, type);
+        lightQueue.emplace(x, y + 1, z, light, type);
+        lightQueue.emplace(x, y, z - 1, light, type);
+        lightQueue.emplace(x, y, z + 1, light, type);
+    }
 
     for (int x = 0; x < CHUNK_SIZE; x++)
     {
@@ -255,36 +343,7 @@ void Chunk::calcLighting()
         {
             for (int z = 0; z < CHUNK_SIZE; z++)
             {
-                if (Blocks::isLight(m_blocks[x][y][z]))
-                {
-                    std::queue<LightNode> lightQueue;
-                    lightQueue.emplace(x, y, z, 15);
-
-                    while (!lightQueue.empty())
-                    {
-                        LightNode &node = lightQueue.front();
-                        uint8_t x = node.x,
-                            y = node.y,
-                            z = node.z,
-                            light = node.light;
-                        lightQueue.pop();
-
-                        if (x < 0 || x > 15 || y < 0 || y > 15 || z < 0 || z > 15)
-                            continue;
-
-                        int val = getLight(x, y, z);
-                        if (getLight(x, y, z) >= light)
-                            continue;
-
-                        setLight(x, y, z, light--);
-                        lightQueue.emplace(x - 1, y, z, light);
-                        lightQueue.emplace(x + 1, y, z, light);
-                        lightQueue.emplace(x, y - 1, z, light); 
-                        lightQueue.emplace(x, y + 1, z, light);
-                        lightQueue.emplace(x, y, z - 1, light);
-                        lightQueue.emplace(x, y, z + 1, light);
-                    }
-                }
+                setLight(x, y, z, lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE]);
             }
         }
     }

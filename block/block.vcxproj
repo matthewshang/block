@@ -37,6 +37,7 @@
     <ClInclude Include="..\src\camera.h" />
     <ClInclude Include="..\src\chunk.h" />
     <ClInclude Include="..\src\chunkcompare.h" />
+    <ClInclude Include="..\src\common.h" />
     <ClInclude Include="..\src\game.h" />
     <ClInclude Include="..\src\perlin.h" />
     <ClInclude Include="..\src\shader.h" />

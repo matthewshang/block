@@ -196,7 +196,7 @@ void Game::updateChunk(Chunk *chunk)
         m_toErase.push_back(chunk->getCoords());
         return;
     }
-    chunk->calcLighting();
+    chunk->calcLighting(m_chunks);
     chunk->buildMesh();
     chunk->bufferData();
 }
@@ -224,7 +224,7 @@ void Game::loadChunks()
                 auto lambda = [c, this]() -> void
                 {
                     m_chunkGenerator.generate(*c);
-                    c->calcLighting();
+                    c->calcLighting(m_chunks);
                     c->buildMesh();
                     std::unique_ptr<Chunk> ptr(c);
                     m_processed.push(ptr);

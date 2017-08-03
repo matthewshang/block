@@ -89,6 +89,9 @@
     <ClInclude Include="..\src\terraingenerator.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\block_vertex.glsl">

@@ -1,10 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <vector>
 
 #include <glm/glm.hpp>
 #include <glad/glad.h>
+
+#include "common.h"
 
 const int CHUNK_SIZE = 16;
 
@@ -18,7 +21,7 @@ public:
 
     void buildMesh();
     void bufferData();
-    void calcLighting();
+    void calcLighting(ChunkMap &chunks);
 
     void bind();
     int getVertexCount();
