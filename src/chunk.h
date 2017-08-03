@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <map>
+#include <queue>`w`q
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -19,9 +20,11 @@ public:
     Chunk(glm::ivec3 pos);
     ~Chunk();
 
-    void buildMesh();
+    //void buildMesh();
     void bufferData();
-    void calcLighting(ChunkMap &chunks);
+    //void calcLighting(ChunkMap &chunks);
+
+    void compute(ChunkMap &chunks);
 
     void bind();
     int getVertexCount();
@@ -38,6 +41,25 @@ public:
 
 private:
     void initBlocks();
+
+    struct ChunkData
+    {
+        uint8_t lightMap[3 * CHUNK_SIZE][3 * CHUNK_SIZE][3 * CHUNK_SIZE];
+        bool opaqueMap[48][48][48];
+    };
+
+    struct LightNode
+    {
+        LightNode(int _x, int _y, int _z, int _light, int type)
+            : x(_x), y(_y), z(_z), light(_light), type(type) {};
+
+        int x, y, z, type;
+        uint8_t light;
+    };
+
+    void getLights(glm::ivec3 &delta, std::queue<LightNode> &queue, ChunkData &blocks);
+    void calcLighting(ChunkMap &chunks, ChunkData &data);
+    void buildMesh(ChunkData &data);
 
     GLuint m_vao;
     GLuint m_vbo;

@@ -16,7 +16,7 @@
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 49, -28)), 
 m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed()
 {
-    initChunks();
+    //initChunks();
     m_eraseDistance = sqrtf(3 * (pow(16 * m_renderDistance, 2))) + 32;
 }
 
@@ -196,8 +196,8 @@ void Game::updateChunk(Chunk *chunk)
         m_toErase.push_back(chunk->getCoords());
         return;
     }
-    chunk->calcLighting(m_chunks);
-    chunk->buildMesh();
+
+    chunk->compute(m_chunks);
     chunk->bufferData();
 }
 
@@ -224,8 +224,7 @@ void Game::loadChunks()
                 auto lambda = [c, this]() -> void
                 {
                     m_chunkGenerator.generate(*c);
-                    c->calcLighting(m_chunks);
-                    c->buildMesh();
+                    c->compute(m_chunks);
                     std::unique_ptr<Chunk> ptr(c);
                     m_processed.push(ptr);
                 };

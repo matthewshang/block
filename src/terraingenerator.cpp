@@ -87,9 +87,18 @@ void TerrainGenerator::generate(Chunk &c)
 
     if (coords == glm::ivec3(-6, 3, -2))
     {
-        c.setBlock(8, 0, 4, Blocks::Glowstone);
+        //c.setBlock(8, 0, 4, Blocks::Glowstone);
         c.setBlock(1, 0, 1, Blocks::Glowstone);
-        c.setBlock(8, 1, 4, Blocks::Sand);
+        c.setBlock(1, 1, 5, Blocks::Sand);
+        c.setBlock(0, 1, 5, Blocks::Sand);
+        c.setBlock(2, 1, 5, Blocks::Sand);
+        c.setBlock(3, 1, 5, Blocks::Sand);
+        c.setBlock(4, 1, 5, Blocks::Sand);
+        c.setBlock(1, 2, 5, Blocks::Sand);
+        c.setBlock(0, 2, 5, Blocks::Sand);
+        c.setBlock(2, 2, 5, Blocks::Sand);
+        c.setBlock(3, 2, 5, Blocks::Sand);
+        c.setBlock(4, 2, 5, Blocks::Sand);
     }
 }
 
@@ -119,6 +128,7 @@ void TerrainGenerator::putTree(Chunk &c, int x, int y, int z)
     {
         c.setBlock(x, y + ty, z, Blocks::Log);
     }
+    c.setBlock(x, y + 4, z, Blocks::Glowstone);
 }
 
 double TerrainGenerator::getHeight(double x, double z)

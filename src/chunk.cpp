@@ -12,8 +12,8 @@ const int Chunk::opposites[6] = {
     1, 0, 3, 2, 5, 4
 };
 
-Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(true), m_glDirty(true), m_vertices(),
-    m_lightmap{}
+Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(false), m_glDirty(true), m_vertices(),
+m_lightmap{}, m_empty(true)
 {
     m_worldCenter = glm::vec3(pos.x * 16 + 8, pos.y * 16 + 8, pos.z * 16 + 8);
 
@@ -22,7 +22,7 @@ Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(true), m_glDirty(true), m_ver
 
     glGenBuffers(1, &m_vbo);
     initBlocks();
-    buildMesh();
+    //buildMesh();
     bufferData();
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
@@ -87,7 +87,7 @@ int Chunk::getLight(int x, int y, int z)
     return (m_lightmap[x][y][z]) & 0xF;
 }
 
-void makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6], int type, int light)
+void makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6], int type, int light[6])
 {
     static const glm::vec3 positions[6][4] = {
         { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3(-0.5f,  0.5f, -0.5f) },
@@ -133,7 +133,8 @@ void makeCube(std::vector<float> &vertices, float x, float y, float z, bool face
             vertices.push_back(positions[i][j].z + z);
             vertices.push_back(tu + texcoords[i][j].x * s);
             vertices.push_back(tv + texcoords[i][j].y * s);
-            float lightVal = (static_cast<float>(light) + 1.0f) / 16.0f;
+            float lightVal = (static_cast<float>(light[i]) + 1.0f) / 16.0f;
+            lightVal = (std::max)(lightVal, 0.1f);
             vertices.push_back(lightVal);
         }
     }
@@ -177,55 +178,6 @@ void makePlant(std::vector<float> &vertices, float x, float y, float z, int type
     }
 }
 
-void Chunk::buildMesh()
-{
-    if (m_dirty)
-    {
-        int total = 0;
-        m_vertices.clear();
-
-        for (int x = 0; x < CHUNK_SIZE; x++)
-        {
-            for (int y = 0; y < CHUNK_SIZE; y++)
-            {
-                for (int z = 0; z < CHUNK_SIZE; z++)
-                {
-                    if (m_blocks[x][y][z] != Blocks::Air)
-                    {
-                        bool visible[6] = { true, true, true, true, true, true };
-                        if (z > 0)              visible[0] = Blocks::isTransparent(m_blocks[x][y][z - 1]);
-                        if (z < CHUNK_SIZE - 1) visible[1] = Blocks::isTransparent(m_blocks[x][y][z + 1]);
-                        if (x > 0)              visible[2] = Blocks::isTransparent(m_blocks[x - 1][y][z]);
-                        if (x < CHUNK_SIZE - 1) visible[3] = Blocks::isTransparent(m_blocks[x + 1][y][z]);
-                        if (y > 0)              visible[4] = Blocks::isTransparent(m_blocks[x][y - 1][z]);
-                        if (y < CHUNK_SIZE - 1) visible[5] = Blocks::isTransparent(m_blocks[x][y + 1][z]);
-
-                        if (Blocks::isPlant(m_blocks[x][y][z]))
-                        {
-                            makePlant(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, 
-                                m_blocks[x][y][z], getLight(x, y, z));
-                        }
-                        else
-                        {
-                            makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible,
-                                m_blocks[x][y][z], getLight(x, y, z));
-                        }
-
-                        for (int i = 0; i < 6; i++) total += visible[i] ? 1 : 0;
-                    }
-                }
-            }
-        }
-        //std::cout << "Faces: " << total << std::endl;
-        m_vertexCount = m_vertices.size() / 6;
-        m_dirty = false;
-        m_glDirty = true;
-        m_empty = total == 0;
-
-        //bufferData();
-    }
-}
-
 void Chunk::bufferData()
 {
     if (m_glDirty)
@@ -236,117 +188,16 @@ void Chunk::bufferData()
     }
 }
 
-struct LightNode
-{
-    LightNode(int _x, int _y, int _z, int _light, int type)
-        : x(_x), y(_y), z(_z), light(_light), type(type) {};
-
-    int x, y, z, type;
-    uint8_t light;
-};
-
-struct BlockArray
-{
-    bool opaque[48][48][48];
-};
-
-static void getLights(Chunk &c, glm::ivec3 &delta, std::queue<LightNode> &queue, 
-    BlockArray &blocks)
-{
-    glm::ivec3 d = delta * 16;
-    glm::ivec3 d2 = (delta + 1) * 16;
-    for (int x = 0; x < CHUNK_SIZE; x++)
-    {
-        for (int y = 0; y < CHUNK_SIZE; y++)
-        {
-            for (int z = 0; z < CHUNK_SIZE; z++)
-            {
-                int type = c.getBlock(x, y, z);
-                if (Blocks::isLight(type))
-                {
-                    queue.emplace(d.x + x, d.y + y, d.z + z, 15, type);
-                }
-                bool val = !Blocks::isLight(type) && !Blocks::isTransparent(type);
-                blocks.opaque[d2.x + x][d2.y + y][d2.z + z] = val;
-            }
-        }
-    }
-}
-
-void Chunk::calcLighting(ChunkMap &chunks)
+void Chunk::compute(ChunkMap &chunks)
 {
     if (!m_dirty)
         return;
 
-    std::queue<LightNode> lightQueue;
-    uint8_t lightMap[3 * CHUNK_SIZE][3 * CHUNK_SIZE][3 * CHUNK_SIZE];
-    //bool opaque[3 * CHUNK_SIZE][3 * CHUNK_SIZE][3 * CHUNK_SIZE];
-    BlockArray blocks;
-    std::memset(lightMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
-    std::memset(blocks.opaque, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
-    const int MIN = -CHUNK_SIZE;
-    const int MAX = 2 * CHUNK_SIZE - 1;
-
-    for (int a = -1; a < 2; a++)
-    {
-        for (int b = -1; b < 2; b++)
-        {
-            for (int c = -1; c < 2; c++)
-            {
-                if (a == 0 && b == 0 && c == 0)
-                {
-                    getLights(*this, glm::ivec3(0), lightQueue, blocks);
-                    continue;
-                }
-                glm::ivec3 coords = m_pos + glm::ivec3(a, b, c);
-                auto neighbor = chunks.find(coords);
-                if (neighbor == chunks.end())
-                    continue;
-                
-                getLights(*neighbor->second, glm::ivec3(a, b, c), lightQueue, blocks);
-            }
-        }
-    }
-
-    while (!lightQueue.empty())
-    {
-        LightNode &node = lightQueue.front();
-        int x = node.x,
-            y = node.y,
-            z = node.z,
-            light = node.light,
-            type = node.type;
-        lightQueue.pop();
-
-        if (x < MIN || x > MAX || y < MIN || y > MAX || z < MIN || z > MAX)
-            continue;
-
-        int val = lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE];
-        if (val >= light)
-            continue;
-
-        //if (blocks.opaque[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE])
-        //    continue;
-
-        lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE] = light--;
-        lightQueue.emplace(x - 1, y, z, light, type);
-        lightQueue.emplace(x + 1, y, z, light, type);
-        lightQueue.emplace(x, y - 1, z, light, type);
-        lightQueue.emplace(x, y + 1, z, light, type);
-        lightQueue.emplace(x, y, z - 1, light, type);
-        lightQueue.emplace(x, y, z + 1, light, type);
-    }
-
-    for (int x = 0; x < CHUNK_SIZE; x++)
-    {
-        for (int y = 0; y < CHUNK_SIZE; y++)
-        {
-            for (int z = 0; z < CHUNK_SIZE; z++)
-            {
-                setLight(x, y, z, lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE]);
-            }
-        }
-    }
+    ChunkData data;
+    std::memset(data.lightMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+    std::memset(data.opaqueMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+    calcLighting(chunks, data);
+    buildMesh(data);
 }
 
 void Chunk::initBlocks()
@@ -362,4 +213,155 @@ void Chunk::initBlocks()
         }
     }
     m_empty = true;
+}
+
+void Chunk::getLights(glm::ivec3 &delta, std::queue<LightNode> &queue, ChunkData &blocks)
+{
+    glm::ivec3 d = delta * 16;
+    glm::ivec3 d2 = (delta + 1) * 16;
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int y = 0; y < CHUNK_SIZE; y++)
+        {
+            for (int z = 0; z < CHUNK_SIZE; z++)
+            {
+                int type = getBlock(x, y, z);
+                if (Blocks::isLight(type))
+                {
+                    queue.emplace(d.x + x, d.y + y, d.z + z, 15, type);
+                }
+                bool val = !Blocks::isLight(type) && !Blocks::isTransparent(type);
+                blocks.opaqueMap[d2.x + x][d2.y + y][d2.z + z] = val;
+            }
+        }
+    }
+}
+
+void Chunk::calcLighting(ChunkMap &chunks, ChunkData &data)
+{
+    std::queue<LightNode> lightQueue;
+    for (int a = -1; a < 2; a++)
+    {
+        for (int b = -1; b < 2; b++)
+        {
+            for (int c = -1; c < 2; c++)
+            {
+                if (a == 0 && b == 0 && c == 0)
+                {
+                    this->getLights(glm::ivec3(0), lightQueue, data);
+                    continue;
+                }
+                glm::ivec3 coords = m_pos + glm::ivec3(a, b, c);
+                auto neighbor = chunks.find(coords);
+                if (neighbor == chunks.end())
+                    continue;
+
+                neighbor->second->getLights(glm::ivec3(a, b, c), lightQueue, data);
+            }
+        }
+    }
+
+    const int MIN = -CHUNK_SIZE;
+    const int MAX = 2 * CHUNK_SIZE - 1;
+
+    while (!lightQueue.empty())
+    {
+        LightNode &node = lightQueue.front();
+        int x = node.x,
+            y = node.y,
+            z = node.z,
+            light = node.light,
+            type = node.type;
+        lightQueue.pop();
+
+        if (x < MIN || x > MAX || y < MIN || y > MAX || z < MIN || z > MAX)
+            continue;
+
+        int val = data.lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE];
+        if (val >= light)
+            continue;
+
+        if (data.opaqueMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE])
+            continue;
+
+        data.lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE] = light--;
+        lightQueue.emplace(x - 1, y, z, light, type);
+        lightQueue.emplace(x + 1, y, z, light, type);
+        lightQueue.emplace(x, y - 1, z, light, type);
+        lightQueue.emplace(x, y + 1, z, light, type);
+        lightQueue.emplace(x, y, z - 1, light, type);
+        lightQueue.emplace(x, y, z + 1, light, type);
+    }
+
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int y = 0; y < CHUNK_SIZE; y++)
+        {
+            for (int z = 0; z < CHUNK_SIZE; z++)
+            {
+                setLight(x, y, z, data.lightMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE]);
+            }
+        }
+    }
+}
+
+void Chunk::buildMesh(ChunkData &data)
+{
+    int total = 0;
+    m_vertices.clear();
+
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int y = 0; y < CHUNK_SIZE; y++)
+        {
+            for (int z = 0; z < CHUNK_SIZE; z++)
+            {
+                if (m_blocks[x][y][z] == Blocks::Air)
+                    continue;
+
+                bool visible[6] = { true, true, true, true, true, true };
+                int light[6] = { 0, 0, 0, 0, 0, 0 };
+
+                int dx = x + CHUNK_SIZE;
+                int dy = y + CHUNK_SIZE;
+                int dz = z + CHUNK_SIZE;
+
+                visible[0] = !data.opaqueMap[dx][dy][dz - 1];
+                light[0] = data.lightMap[dx][dy][dz - 1];
+
+                visible[1] = !data.opaqueMap[dx][dy][dz + 1];
+                light[1] = data.lightMap[dx][dy][dz + 1];
+
+                visible[2] = !data.opaqueMap[dx - 1][dy][dz];
+                light[2] = data.lightMap[dx - 1][dy][dz];
+
+                visible[3] = !data.opaqueMap[dx + 1][dy][dz];
+                light[3] = data.lightMap[dx + 1][dy][dz];
+
+                visible[4] = !data.opaqueMap[dx][dy - 1][dz];
+                light[4] = data.lightMap[dx][dy - 1][dz];
+
+                visible[5] = !data.opaqueMap[dx][dy + 1][dz];
+                light[5] = data.lightMap[dx][dy + 1][dz];
+
+                if (Blocks::isPlant(m_blocks[x][y][z]))
+                {
+                    makePlant(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16,
+                        m_blocks[x][y][z], getLight(x, y, z));
+                }
+                else
+                {
+                    makeCube(m_vertices, x + m_pos.x * 16, y + m_pos.y * 16, z + m_pos.z * 16, visible,
+                        m_blocks[x][y][z], light);
+                }
+
+                for (int i = 0; i < 6; i++) total += visible[i] ? 1 : 0;
+            }
+        }
+    }
+
+    m_vertexCount = m_vertices.size() / 6;
+    m_dirty = false;
+    m_glDirty = true;
+    m_empty = total == 0;
 }
