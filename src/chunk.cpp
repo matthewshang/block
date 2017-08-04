@@ -355,6 +355,21 @@ void Chunk::smoothLighting(int x, int y, int z, ChunkData &data, float light[6][
     }
 }
 
+void Chunk::faceLighting(int x, int y, int z, ChunkData & data, float light[6][4])
+{
+    static const glm::ivec3 off[6] = {
+        glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1), glm::ivec3(-1, 0, 0),
+        glm::ivec3(1, 0, 0), glm::ivec3(0, 1, 0), glm::ivec3(0, -1, 0)
+    };
+
+    for (int i = 0; i < 6; i++)
+    {
+        const glm::ivec3 &d = off[i];
+        for (int j = 0; j < 4; j++)
+            light[i][j] = static_cast<float>(data.lightMap[x + d.x][y + d.y][z + d.z]);
+    }
+}
+
 void Chunk::buildMesh(ChunkData &data)
 {
     int total = 0;
@@ -377,6 +392,7 @@ void Chunk::buildMesh(ChunkData &data)
                 int dz = z + CHUNK_SIZE;
 
                 smoothLighting(dx, dy, dz, data, light);
+                //faceLighting(dx, dy, dz, data, light);
 
                 visible[0] = !data.opaqueMap[dx][dy][dz + 1];
                 visible[1] = !data.opaqueMap[dx][dy][dz - 1];

@@ -61,6 +61,7 @@ private:
     void getLights(glm::ivec3 &delta, std::queue<LightNode> &queue, ChunkData &blocks);
     void calcLighting(ChunkMap &chunks, ChunkData &data);
     void smoothLighting(int x, int y, int z, ChunkData &data, float light[6][4]);
+    void faceLighting(int x, int y, int z, ChunkData &data, float light[6][4]);
     void buildMesh(ChunkData &data);
 
     GLuint m_vao;
