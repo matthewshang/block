@@ -24,7 +24,9 @@ void Game::run()
 {
     Shader shader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl");
 
-    Texture texture1("../res/textures/terrain.png", GL_RGBA);
+    //Texture texture1("../res/textures/terrain.png", GL_RGBA);
+    Texture texture1("../res/textures/white.png", GL_RGB);
+
 
     glEnable(GL_DEPTH_TEST);
 
@@ -182,7 +184,7 @@ void Game::processInput(float dt)
             bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
             c->setBlock(local.x, 
                         local.y,
-                        local.z, left ? 0 : Blocks::Glowstone);
+                        local.z, left ? Blocks::Air : Blocks::Glowstone);
             dirtyChunks(c->getCoords());
         }
     }

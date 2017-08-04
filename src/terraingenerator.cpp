@@ -89,16 +89,16 @@ void TerrainGenerator::generate(Chunk &c)
     {
         //c.setBlock(8, 0, 4, Blocks::Glowstone);
         c.setBlock(1, 0, 1, Blocks::Glowstone);
-        c.setBlock(1, 1, 5, Blocks::Sand);
-        c.setBlock(0, 1, 5, Blocks::Sand);
+        //c.setBlock(1, 1, 5, Blocks::Sand);
+        //c.setBlock(0, 1, 5, Blocks::Sand);
         c.setBlock(2, 1, 5, Blocks::Sand);
-        c.setBlock(3, 1, 5, Blocks::Sand);
-        c.setBlock(4, 1, 5, Blocks::Sand);
-        c.setBlock(1, 2, 5, Blocks::Sand);
-        c.setBlock(0, 2, 5, Blocks::Sand);
-        c.setBlock(2, 2, 5, Blocks::Sand);
-        c.setBlock(3, 2, 5, Blocks::Sand);
-        c.setBlock(4, 2, 5, Blocks::Sand);
+        //c.setBlock(3, 1, 5, Blocks::Sand);
+        //c.setBlock(4, 1, 5, Blocks::Sand);
+        //c.setBlock(1, 2, 5, Blocks::Sand);
+        //c.setBlock(0, 2, 5, Blocks::Sand);
+        //c.setBlock(2, 2, 5, Blocks::Sand);
+        //c.setBlock(3, 2, 5, Blocks::Sand);
+        //c.setBlock(4, 2, 5, Blocks::Sand);
     }
 }
 
