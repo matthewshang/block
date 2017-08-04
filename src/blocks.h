@@ -15,7 +15,8 @@ namespace Blocks
         RedFlower,
         YellowFlower,
         GrassPlant,
-        Glowstone
+        Glowstone,
+        TNT
     };
 
     extern int faces[256][6];

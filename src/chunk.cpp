@@ -92,30 +92,24 @@ int Chunk::getLight(int x, int y, int z)
 void makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6], int type, float light[6][4])
 {
     static const glm::vec3 positions[6][4] = {
-        { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3(-0.5f,  0.5f, -0.5f) },
-        { glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3(-0.5f,  0.5f,  0.5f) },
-        { glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-0.5f, -0.5f,  0.5f) },
-        { glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0.5f, -0.5f,  0.5f) },
-        { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3(-0.5f, -0.5f,  0.5f) },
-        { glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3(-0.5f,  0.5f,  0.5f) }
+        { glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3( 0.5f, -0.5f,  0.5f) },
+        { glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3(-0.5f, -0.5f, -0.5f) },
+        { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3(-0.5f, -0.5f,  0.5f) },
+        { glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 0.5f, -0.5f, -0.5f) },
+        { glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 0.5f,  0.5f,  0.5f) },
+        { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3( 0.5f, -0.5f, -0.5f) }
     };
 
-    static const glm::vec2 texcoords[6][4] = {
-        { glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f) },
-        { glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f) },
-        { glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f) },
-        { glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f) },
-        { glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f) },
-        { glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f) }
+    static const glm::vec2 texcoords[6] = {
+        glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)
     };
 
-    static const int indices[6][6] = {
-        { 0, 3, 2, 0, 1, 2 },
-        { 0, 1, 2, 0, 2, 3 },
-        { 0, 2, 3, 0, 1, 2 },
-        { 0, 3, 2, 0, 2, 1 },
-        { 0, 2, 3, 0, 1, 2 },
-        { 0, 3, 2, 0, 2, 1 }
+    static const int indices[6] = {
+        0, 1, 2, 0, 2, 3
+    };
+
+    static const int flipped[6] = {
+        0, 1, 3, 3, 1, 2
     };
 
     float s = 1.0f / 16.0f;
@@ -127,14 +121,17 @@ void makeCube(std::vector<float> &vertices, float x, float y, float z, bool face
         int idx = Blocks::faces[type][i];
         float tu = s * static_cast<float>(idx % 16);
         float tv = 1.0f - s * static_cast<float>(idx / 16) - s;
+
+        // https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/
+        bool flip = light[i][0] + light[i][2] > light[i][1] + light[i][3];
         for (int v = 0; v < 6; v++)
         {
-            int j = indices[i][v];
+            int j = flip ? flipped[v] : indices[v];
             vertices.push_back(positions[i][j].x + x);
             vertices.push_back(positions[i][j].y + y);
             vertices.push_back(positions[i][j].z + z);
-            vertices.push_back(tu + texcoords[i][j].x * s);
-            vertices.push_back(tv + texcoords[i][j].y * s);
+            vertices.push_back(tu + texcoords[j].x * s);
+            vertices.push_back(tv + texcoords[j].y * s);
             float lightVal = (static_cast<float>(light[i][j]) + 1.0f) / 16.0f;
             lightVal = (std::max)(lightVal, 0.1f);
             vertices.push_back(lightVal);
@@ -323,13 +320,13 @@ void Chunk::calcLighting(ChunkMap &chunks, ChunkData &data)
 void Chunk::smoothLighting(int x, int y, int z, ChunkData &data, float light[6][4])
 {
     static const int indices[6][4] = {
-        { 0, 1, 2, 3 }, { 4, 5, 6, 7 }, { 7, 3, 0, 4 },
-        { 6, 2, 1, 5 }, { 0, 1, 5, 4 }, { 3, 2, 6, 7 }
+        { 0, 1, 2, 3 }, { 7, 6, 5, 4 }, { 4, 5, 1, 0 },
+        { 3, 2, 6, 7 }, { 1, 5, 6, 2 }, { 4, 0, 3, 7 }
     };
 
     static const glm::ivec3 start[8] = {
-        glm::ivec3(-1, -1, -1), glm::ivec3(0, -1, -1), glm::ivec3(0, 0, -1), glm::ivec3(-1, 0, -1),
-        glm::ivec3(-1, -1, 0), glm::ivec3(0, -1, 0), glm::ivec3(0, 0, 0), glm::ivec3(-1, 0, 0)
+        glm::ivec3(-1, -1, 0), glm::ivec3(-1, 0, 0), glm::ivec3(0, 0, 0), glm::ivec3(0, -1, 0),
+        glm::ivec3(-1, -1, -1), glm::ivec3(-1, 0, -1), glm::ivec3(0, 0, -1), glm::ivec3(0, -1, -1)
     };
 
     static const glm::ivec3 off[8] = {
@@ -381,12 +378,12 @@ void Chunk::buildMesh(ChunkData &data)
 
                 smoothLighting(dx, dy, dz, data, light);
 
-                visible[0] = !data.opaqueMap[dx][dy][dz - 1];
-                visible[1] = !data.opaqueMap[dx][dy][dz + 1];
+                visible[0] = !data.opaqueMap[dx][dy][dz + 1];
+                visible[1] = !data.opaqueMap[dx][dy][dz - 1];
                 visible[2] = !data.opaqueMap[dx - 1][dy][dz];
                 visible[3] = !data.opaqueMap[dx + 1][dy][dz];
-                visible[4] = !data.opaqueMap[dx][dy - 1][dz];
-                visible[5] = !data.opaqueMap[dx][dy + 1][dz];
+                visible[4] = !data.opaqueMap[dx][dy + 1][dz];
+                visible[5] = !data.opaqueMap[dx][dy - 1][dz];
 
                 if (Blocks::isPlant(m_blocks[x][y][z]))
                 {

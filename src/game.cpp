@@ -24,8 +24,8 @@ void Game::run()
 {
     Shader shader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl");
 
-    //Texture texture1("../res/textures/terrain.png", GL_RGBA);
-    Texture texture1("../res/textures/white.png", GL_RGB);
+    Texture texture1("../res/textures/terrain.png", GL_RGBA);
+    //Texture texture1("../res/textures/white.png", GL_RGB);
 
 
     glEnable(GL_DEPTH_TEST);
