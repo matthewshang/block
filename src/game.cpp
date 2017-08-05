@@ -27,6 +27,7 @@ void Game::run()
     Texture texture1("../res/textures/terrain.png", GL_RGBA);
     //Texture texture1("../res/textures/white.png", GL_RGB);
 
+    float daylight = 0.0f;
     glEnable(GL_DEPTH_TEST);
 
     shader.bind();
@@ -83,7 +84,17 @@ void Game::run()
         m_processed.for_each(move);
         m_processed.clear();
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        auto update = [this](std::unique_ptr<ComputeJob> &job) -> void
+        {
+            job->transfer();
+        };
+
+        m_updates.for_each(update);
+        m_updates.clear();
+
+        daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.7f;
+
+        glClearColor(135.f / 255.f, 206.f / 255.f, 250.f / 255.f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -98,6 +109,7 @@ void Game::run()
         shader.setMat4("model", model);
         shader.setMat4("view", m_camera.getView());
         shader.setMat4("projection", projection);
+        shader.setFloat("daylight", daylight);
 
         texture1.bind(GL_TEXTURE0);
 
@@ -213,7 +225,16 @@ void Game::updateChunk(Chunk *chunk)
         return;
     }
 
-    chunk->compute(m_chunks);
+    if (chunk->isDirty())
+    {
+        auto update = [this, chunk]() -> void
+        {
+            auto compute = std::make_unique<ComputeJob>(*chunk, m_chunks);
+            compute->execute();
+            m_updates.push_back(compute);
+        };
+        m_pool.addJob(update);
+    }
 }
 
 void Game::dirtyChunks(glm::ivec3 center)

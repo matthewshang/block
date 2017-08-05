@@ -22,6 +22,7 @@
     <ClCompile Include="..\src\blocks.cpp" />
     <ClCompile Include="..\src\camera.cpp" />
     <ClCompile Include="..\src\chunk.cpp" />
+    <ClCompile Include="..\src\computejob.cpp" />
     <ClCompile Include="..\src\game.cpp" />
     <ClCompile Include="..\src\glad.c" />
     <ClCompile Include="..\src\main.cpp" />
@@ -38,6 +39,7 @@
     <ClInclude Include="..\src\chunk.h" />
     <ClInclude Include="..\src\chunkcompare.h" />
     <ClInclude Include="..\src\common.h" />
+    <ClInclude Include="..\src\computejob.h" />
     <ClInclude Include="..\src\game.h" />
     <ClInclude Include="..\src\perlin.h" />
     <ClInclude Include="..\src\shader.h" />

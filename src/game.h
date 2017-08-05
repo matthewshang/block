@@ -11,6 +11,7 @@
 #include "chunk.h"
 #include "chunkcompare.h"
 #include "common.h"
+#include "computejob.h"
 #include "sharedvector.h"
 #include "terraingenerator.h"
 #include "threadpool.h"
@@ -35,6 +36,7 @@ private:
     ChunkMap m_chunks;
     std::set<glm::ivec3, ChunkCompare> m_loadedChunks;
     SharedVector<std::unique_ptr<Chunk>> m_processed;
+    SharedVector<std::unique_ptr<ComputeJob>> m_updates;
     std::vector<glm::ivec3> m_toErase;
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;

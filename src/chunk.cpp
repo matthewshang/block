@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "blocks.h"
+#include "computejob.h"
 #include "timer.h"
 
 const int Chunk::opposites[6] = {
@@ -192,21 +193,25 @@ void Chunk::compute(ChunkMap &chunks)
     if (!m_dirty)
         return;
 
-    Timer timer, lighting, meshing;
-    timer.start();
+    ComputeJob job(*this, chunks);
+    job.execute();
+    job.transfer();
 
-    ChunkData data;
-    std::memset(data.lightMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
-    std::memset(data.opaqueMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+    //Timer timer, lighting, meshing;
+    //timer.start();
 
-    lighting.start();
-    calcLighting(chunks, data);
-    //lighting.log("  Lighting time: ");
-    meshing.start();
-    buildMesh(data);
-    //meshing.log("   Meshing time: ");
+    //ChunkData data;
+    //std::memset(data.lightMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+    //std::memset(data.opaqueMap, 0, 27 * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
 
-    //timer.log("Compute time: ");
+    //lighting.start();
+    //calcLighting(chunks, data);
+    ////lighting.log("  Lighting time: ");
+    //meshing.start();
+    //buildMesh(data);
+    ////meshing.log("   Meshing time: ");
+
+    ////timer.log("Compute time: ");
 }
 
 void Chunk::initBlocks()

@@ -15,6 +15,8 @@ const int CHUNK_SIZE = 16;
 class Chunk
 {
 public:
+    friend class ComputeJob;
+
     static const int opposites[6];
 
     Chunk(glm::ivec3 pos);
@@ -28,6 +30,7 @@ public:
 
     void bind();
     void dirty() { m_dirty = true; };
+    bool isDirty() { return m_dirty; };
     int getVertexCount();
     bool isEmpty();
     void setBlock(int x, int y, int z, uint8_t type);
