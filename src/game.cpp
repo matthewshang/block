@@ -13,28 +13,17 @@
 #include "shader.h"
 #include "texture.h"
 
-Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 49, -28)), 
-m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed()
+Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 49, -28)),
+    m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed(),
+    m_renderer(m_chunks)
 {
-    //initChunks();
-    m_eraseDistance = static_cast<int>(sqrtf(3 * (pow(16 * m_renderDistance, 2)))) + 32;
+    m_eraseDistance = sqrtf(3 * (pow(16 * m_loadDistance, 2))) + 32.0f;
 }
 
 void Game::run()
 {
-    Shader shader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl");
-
-    Texture texture1("../res/textures/terrain.png", GL_RGBA);
-    //Texture texture1("../res/textures/white.png", GL_RGB);
-
-    float daylight = 0.0f;
-    glEnable(GL_DEPTH_TEST);
-
-    shader.bind();
-    shader.setInt("texture1", 0);
-
-    glm::mat4 projection;
-    projection = glm::perspective(glm::radians(45.0f), static_cast<float>(1920) / static_cast<float>(1080), 0.1f, 100.0f);
+    glm::vec3 skyColor(135.0f, 206.0f, 250.0f);
+    skyColor /= 255.0f;
 
     float dt = 0.0f;
     double lastFrame = 0.0f;
@@ -45,84 +34,12 @@ void Game::run()
     {
         processInput(dt);
 
-        loadChunks();
+        update();
 
-        for (const auto& it : m_chunks)
-        {
-            auto& chunk = it.second;
-            updateChunk(chunk.get());
-        }
-
-        for (const auto &chunk : m_toErase)
-        {
-            m_chunks.erase(chunk);
-            m_loadedChunks.erase(chunk);
-        }
-        m_toErase.clear();
-
-        auto move = [this](std::unique_ptr<Chunk> &c) -> void
-        {
-            glm::ivec3 coords = c->getCoords();
-            m_chunks.insert(std::make_pair(coords, std::move(c)));
-
-            for (int x = -1; x < 2; x++)
-            {
-                for (int y = -1; y < 2; y++)
-                {
-                    for (int z = -1; z < 2; z++)
-                    {
-                        auto neighbor = m_chunks.find(coords + glm::ivec3(x, y, z));
-                        if (neighbor != m_chunks.end())
-                        {
-                            neighbor->second->dirty();
-                        }
-                    }
-                }
-            }
-        };
-
-        m_processed.for_each(move);
-        m_processed.clear();
-
-        auto update = [this](std::unique_ptr<ComputeJob> &job) -> void
-        {
-            job->transfer();
-        };
-
-        m_updates.for_each(update);
-        m_updates.clear();
-
-        daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.7f;
-
-        glClearColor(135.f / 255.f, 206.f / 255.f, 250.f / 255.f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        //glEnable(GL_CULL_FACE);
-
-        shader.bind();
-
-        glm::mat4 model;
-
-        glm::mat4 view = m_camera.getView();
-
-        shader.setMat4("model", model);
-        shader.setMat4("view", m_camera.getView());
-        shader.setMat4("projection", projection);
-        shader.setFloat("daylight", daylight);
-
-        texture1.bind(GL_TEXTURE0);
-
-        for (const auto& it : m_chunks)
-        {
-            auto& chunk = it.second;
-            if (!chunk->isEmpty())
-            {
-                chunk->bufferData();
-                chunk->bind();
-                glDrawArrays(GL_TRIANGLES, 0, chunk->getVertexCount());
-            }
-        }
+        float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.7f;
+        m_renderer.setSkyColor(skyColor * daylight);
+        m_renderer.setDaylight(daylight);
+        m_renderer.render(m_camera);
 
         glfwSwapBuffers(m_window);
         glfwPollEvents();
@@ -217,6 +134,56 @@ void Game::processInput(float dt)
     }
 }
 
+void Game::update()
+{
+    loadChunks();
+
+    for (const auto& it : m_chunks)
+    {
+        auto& chunk = it.second;
+        updateChunk(chunk.get());
+    }
+
+    for (const auto &chunk : m_toErase)
+    {
+        m_chunks.erase(chunk);
+        m_loadedChunks.erase(chunk);
+    }
+    m_toErase.clear();
+
+    auto move = [this](std::unique_ptr<Chunk> &c) -> void
+    {
+        glm::ivec3 coords = c->getCoords();
+        m_chunks.insert(std::make_pair(coords, std::move(c)));
+
+        for (int x = -1; x < 2; x++)
+        {
+            for (int y = -1; y < 2; y++)
+            {
+                for (int z = -1; z < 2; z++)
+                {
+                    auto neighbor = m_chunks.find(coords + glm::ivec3(x, y, z));
+                    if (neighbor != m_chunks.end())
+                    {
+                        neighbor->second->dirty();
+                    }
+                }
+            }
+        }
+    };
+
+    m_processed.for_each(move);
+    m_processed.clear();
+
+    auto update = [this](std::unique_ptr<ComputeJob> &job) -> void
+    {
+        job->transfer();
+    };
+
+    m_updates.for_each(update);
+    m_updates.clear();
+}
+
 void Game::updateChunk(Chunk *chunk)
 {
     if (glm::distance(chunk->getCenter(), m_camera.getPos()) > m_eraseDistance)
@@ -261,11 +228,11 @@ void Game::loadChunks()
         static_cast<int>(std::floorf(toChunk.y)),
         static_cast<int>(std::floorf(toChunk.z)));
 
-    for (int x = -m_renderDistance; x <= m_renderDistance; x++)
+    for (int x = -m_loadDistance; x <= m_loadDistance; x++)
     {
-        for (int y = -m_renderDistance; y <= m_renderDistance; y++)
+        for (int y = -m_loadDistance; y <= m_loadDistance; y++)
         {
-            for (int z = -m_renderDistance; z <= m_renderDistance; z++)
+            for (int z = -m_loadDistance; z <= m_loadDistance; z++)
             {
                 glm::ivec3 coords = current + glm::ivec3(x, y, z);
                 if (m_loadedChunks.find(coords) != m_loadedChunks.end()) 

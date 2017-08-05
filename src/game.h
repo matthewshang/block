@@ -12,6 +12,7 @@
 #include "chunkcompare.h"
 #include "common.h"
 #include "computejob.h"
+#include "renderer.h"
 #include "sharedvector.h"
 #include "terraingenerator.h"
 #include "threadpool.h"
@@ -25,21 +26,27 @@ public:
 
 private:
     void processInput(float dt);
+    void update();
+
     void updateChunk(Chunk *chunk);
     void dirtyChunks(glm::ivec3 center);
     void loadChunks();
     void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 
-    const int m_renderDistance = 1;
+    const int m_loadDistance = 2;
     float m_eraseDistance;
+
     ChunkMap m_chunks;
     std::set<glm::ivec3, ChunkCompare> m_loadedChunks;
     SharedVector<std::unique_ptr<Chunk>> m_processed;
     SharedVector<std::unique_ptr<ComputeJob>> m_updates;
     std::vector<glm::ivec3> m_toErase;
+
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;
+
+    Renderer m_renderer;
 
     GLFWwindow *m_window;
     Camera m_camera;
