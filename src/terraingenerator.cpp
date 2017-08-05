@@ -95,7 +95,6 @@ void TerrainGenerator::generate(Chunk &c)
             c.setBlock(i, 2, 7, Blocks::Sand);
             c.setBlock(i, 3, 7, Blocks::Sand);
             c.setBlock(i, 4, 7, Blocks::Sand);
-
         }
     }
 }
@@ -126,7 +125,7 @@ void TerrainGenerator::putTree(Chunk &c, int x, int y, int z)
     {
         c.setBlock(x, y + ty, z, Blocks::Log);
     }
-    //c.setBlock(x, y + 4, z, Blocks::Glowstone);
+    c.setBlock(x, y, z, Blocks::Glowstone);
 }
 
 double TerrainGenerator::getHeight(double x, double z)

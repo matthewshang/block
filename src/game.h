@@ -10,8 +10,8 @@
 #include "camera.h"
 #include "chunk.h"
 #include "chunkcompare.h"
-#include "chunklist.h"
 #include "common.h"
+#include "sharedvector.h"
 #include "terraingenerator.h"
 #include "threadpool.h"
 
@@ -34,7 +34,7 @@ private:
     float m_eraseDistance;
     ChunkMap m_chunks;
     std::set<glm::ivec3, ChunkCompare> m_loadedChunks;
-    ChunkList m_processed;
+    SharedVector<std::unique_ptr<Chunk>> m_processed;
     std::vector<glm::ivec3> m_toErase;
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;

@@ -22,7 +22,6 @@
     <ClCompile Include="..\src\blocks.cpp" />
     <ClCompile Include="..\src\camera.cpp" />
     <ClCompile Include="..\src\chunk.cpp" />
-    <ClCompile Include="..\src\chunklist.cpp" />
     <ClCompile Include="..\src\game.cpp" />
     <ClCompile Include="..\src\glad.c" />
     <ClCompile Include="..\src\main.cpp" />
@@ -42,7 +41,7 @@
     <ClInclude Include="..\src\game.h" />
     <ClInclude Include="..\src\perlin.h" />
     <ClInclude Include="..\src\shader.h" />
-    <ClInclude Include="..\src\chunklist.h" />
+    <ClInclude Include="..\src\sharedvector.h" />
     <ClInclude Include="..\src\stb_image.h" />
     <ClInclude Include="..\src\terraingenerator.h" />
     <ClInclude Include="..\src\texture.h" />

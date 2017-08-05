@@ -42,9 +42,6 @@
     <ClCompile Include="..\src\threadpool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\chunklist.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\blocks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -80,9 +77,6 @@
     <ClInclude Include="..\src\threadpool.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\chunklist.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\chunkcompare.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -96,6 +90,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\timer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sharedvector.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

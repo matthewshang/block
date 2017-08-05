@@ -17,7 +17,7 @@ Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 49, -
 m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed()
 {
     //initChunks();
-    m_eraseDistance = sqrtf(3 * (pow(16 * m_renderDistance, 2))) + 32;
+    m_eraseDistance = static_cast<int>(sqrtf(3 * (pow(16 * m_renderDistance, 2)))) + 32;
 }
 
 void Game::run()
@@ -26,7 +26,6 @@ void Game::run()
 
     Texture texture1("../res/textures/terrain.png", GL_RGBA);
     //Texture texture1("../res/textures/white.png", GL_RGB);
-
 
     glEnable(GL_DEPTH_TEST);
 
@@ -45,20 +44,13 @@ void Game::run()
     {
         processInput(dt);
 
-        if (nFrames % 2 == 0) loadChunks();
-
-        //auto start = std::chrono::high_resolution_clock::now();
+        loadChunks();
 
         for (const auto& it : m_chunks)
         {
             auto& chunk = it.second;
             updateChunk(chunk.get());
         }
-
-        //auto end = std::chrono::high_resolution_clock::now();
-        //auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-        //if (diff.count() > 0) std::cout << "update: " << diff.count() << "ms" << std::endl;
 
         for (const auto &chunk : m_toErase)
         {
@@ -67,7 +59,29 @@ void Game::run()
         }
         m_toErase.clear();
 
-        m_processed.moveChunks(m_chunks);
+        auto move = [this](std::unique_ptr<Chunk> &c) -> void
+        {
+            glm::ivec3 coords = c->getCoords();
+            m_chunks.insert(std::make_pair(coords, std::move(c)));
+
+            for (int x = -1; x < 2; x++)
+            {
+                for (int y = -1; y < 2; y++)
+                {
+                    for (int z = -1; z < 2; z++)
+                    {
+                        auto neighbor = m_chunks.find(coords + glm::ivec3(x, y, z));
+                        if (neighbor != m_chunks.end())
+                        {
+                            neighbor->second->dirty();
+                        }
+                    }
+                }
+            }
+        };
+
+        m_processed.for_each(move);
+        m_processed.clear();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -92,6 +106,7 @@ void Game::run()
             auto& chunk = it.second;
             if (!chunk->isEmpty())
             {
+                chunk->bufferData();
                 chunk->bind();
                 glDrawArrays(GL_TRIANGLES, 0, chunk->getVertexCount());
             }
@@ -113,7 +128,7 @@ void Game::run()
             int z = static_cast<int>(std::floorf(toChunk.z));
             char title[256];
             title[255] = '\0';
-            snprintf(title, 255, "block - [FPS: %d] [%d chunks] [%d jobs queued] [pos: %f, %f, %f] [chunk: %d %d %d]", nFrames, m_chunks.size(), m_pool.getJobsAmount(),
+            snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [pos: %f, %f, %f] [chunk: %d %d %d]", nFrames, m_chunks.size(), m_pool.getJobsAmount(),
                 m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z, x, y, z);
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
@@ -199,7 +214,6 @@ void Game::updateChunk(Chunk *chunk)
     }
 
     chunk->compute(m_chunks);
-    chunk->bufferData();
 }
 
 void Game::dirtyChunks(glm::ivec3 center)
@@ -243,7 +257,7 @@ void Game::loadChunks()
                     m_chunkGenerator.generate(*c);
                     c->compute(m_chunks);
                     std::unique_ptr<Chunk> ptr(c);
-                    m_processed.push(ptr);
+                    m_processed.push_back(ptr);
                 };
                 m_pool.addJob(lambda);
             }
