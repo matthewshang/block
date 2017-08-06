@@ -25,6 +25,7 @@
     <ClCompile Include="..\src\computejob.cpp" />
     <ClCompile Include="..\src\game.cpp" />
     <ClCompile Include="..\src\glad.c" />
+    <ClCompile Include="..\src\inputmanager.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\perlin.cpp" />
     <ClCompile Include="..\src\renderer.cpp" />
@@ -42,6 +43,7 @@
     <ClInclude Include="..\src\common.h" />
     <ClInclude Include="..\src\computejob.h" />
     <ClInclude Include="..\src\game.h" />
+    <ClInclude Include="..\src\inputmanager.h" />
     <ClInclude Include="..\src\perlin.h" />
     <ClInclude Include="..\src\renderer.h" />
     <ClInclude Include="..\src\shader.h" />

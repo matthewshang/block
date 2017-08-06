@@ -20,6 +20,9 @@ public:
 
     glm::mat4 getView();
     const glm::vec3 &getPos() const { return m_pos; };
+    const glm::vec3 &getFront() const { return m_front; };
+    const glm::vec3 &getRight() const { return m_right; };
+    void setPos(glm::vec3 &pos) { m_pos = pos; };
     void processKeyboard(Movement dir, float dt);
     void processMouse(float dx, float dy);
 

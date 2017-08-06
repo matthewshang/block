@@ -13,11 +13,19 @@
 #include "shader.h"
 #include "texture.h"
 
+static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    InputManager *input = reinterpret_cast<InputManager *>(glfwGetWindowUserPointer(window));
+    input->handleKey(key, action);
+}
+
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 49, -28)),
     m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed(),
-    m_renderer(m_chunks)
+    m_renderer(m_chunks), m_pos(-88, 49, -28), m_vel(0)
 {
     m_eraseDistance = sqrtf(3 * (pow(16 * m_loadDistance, 2))) + 32.0f;
+    glfwSetWindowUserPointer(window, &m_input);
+    glfwSetKeyCallback(window, key_callback);
 }
 
 void Game::run()
@@ -34,9 +42,11 @@ void Game::run()
     {
         processInput(dt);
 
-        update();
+        updateChunks();
+        updatePlayer(dt);
 
-        float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.7f;
+        //float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.7f;
+        float daylight = 0.25f;
         m_renderer.setSkyColor(skyColor * daylight);
         m_renderer.setDaylight(daylight);
         m_renderer.render(m_camera);
@@ -68,35 +78,9 @@ void Game::run()
 
 void Game::processInput(float dt)
 {
-    if (glfwGetKey(m_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (m_input.keyPressed(GLFW_KEY_ESCAPE))
     {
         glfwSetWindowShouldClose(m_window, true);
-    }
-
-    float camSpeed = 2.5f * dt;
-    if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        m_camera.processKeyboard(Camera::Movement::FOWARD, dt);
-    }
-    if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        m_camera.processKeyboard(Camera::Movement::BACKWARD, dt);
-    }
-    if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        m_camera.processKeyboard(Camera::Movement::LEFT, dt);
-    }
-    if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS)
-    {
-        m_camera.processKeyboard(Camera::Movement::RIGHT, dt);
-    }
-    if (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS)
-    {
-        m_camera.processKeyboard(Camera::Movement::UP, dt);
-    }
-    if (glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    {
-        m_camera.processKeyboard(Camera::Movement::DOWN, dt);
     }
 
     double xpos, ypos;
@@ -134,7 +118,7 @@ void Game::processInput(float dt)
     }
 }
 
-void Game::update()
+void Game::updateChunks()
 {
     loadChunks();
 
@@ -182,6 +166,57 @@ void Game::update()
 
     m_updates.for_each(update);
     m_updates.clear();
+}
+
+void Game::updatePlayer(float dt)
+{
+    glm::vec3 f;
+
+    if (m_input.keyPressed(GLFW_KEY_W))
+    {
+        f += m_camera.getFront() * 7.0f;
+    }
+    if (m_input.keyPressed(GLFW_KEY_S))
+    {
+        f -= m_camera.getFront() * 7.0f;
+    }
+    if (m_input.keyPressed(GLFW_KEY_A))
+    {
+        f -= m_camera.getRight() * 7.0f;
+    }
+    if (m_input.keyPressed(GLFW_KEY_D))
+    {
+        f += m_camera.getRight() * 7.0f;
+    }
+    if (m_input.keyPressed(GLFW_KEY_SPACE))
+    {
+        f += glm::vec3(0, 7.0f, 0);
+    }
+    if (m_input.keyPressed(GLFW_KEY_LEFT_SHIFT))
+    {
+        f -= glm::vec3(0, 7.0f, 0);
+    }
+
+    Chunk *c = chunkFromWorld(m_pos);
+    if (c)
+    {
+        glm::vec3 a = glm::floor(m_pos);
+        glm::ivec3 local(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(a.z));
+        local = glm::ivec3((local.x % 16 + 16) % 16, (local.y % 16 + 16) % 16, (local.z % 16 + 16) % 16);
+
+        std::cout << (c->getBlock(local.x, local.y, local.z) == Blocks::Air) << std::endl;
+    }
+
+
+    float d = 1.9f;
+    f += m_vel * -0.5f * d;
+
+    glm::vec3 accel = f;
+
+    m_vel += accel * dt;
+    m_pos += m_vel * dt;
+
+    m_camera.setPos(m_pos);
 }
 
 void Game::updateChunk(Chunk *chunk)
