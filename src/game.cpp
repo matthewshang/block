@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "blocks.h"
 #include "chunk.h"
@@ -19,9 +20,9 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
     input->handleKey(key, action);
 }
 
-Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 52, -28)),
+Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -28)),
     m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed(),
-    m_renderer(m_chunks), m_pos(-88, 51, -28), m_vel(0)
+    m_renderer(m_chunks), m_pos(-88, 54, -28), m_vel(0)
 {
     m_eraseDistance = sqrtf(3 * (pow(16 * m_loadDistance, 2))) + 32.0f;
     glfwSetWindowUserPointer(window, &m_input);
@@ -81,6 +82,10 @@ void Game::processInput(float dt)
     if (m_input.keyPressed(GLFW_KEY_ESCAPE))
     {
         glfwSetWindowShouldClose(m_window, true);
+    }
+    if (m_input.keyPressed(GLFW_KEY_R))
+    {
+        m_pos = glm::vec3(-88, 54, -28);
     }
 
     double xpos, ypos;
@@ -181,9 +186,32 @@ static Chunk *getChunk(ChunkMap &chunks, glm::ivec3 coords)
     }
 }
 
-static int getBlock(Chunk *chunks[7], int x, int y, int z)
+static int getBlock(Chunk *chunks[7], Chunk *edges[4], int x, int y, int z)
 {
-    if (x < 0)
+    if (y < 0)
+    {
+        if (x < 0)
+        {
+            return edges[0] ? edges[0]->getBlock(16 + x, 16 + y, z) : Blocks::Bedrock;
+        }
+        else if (x > 15)
+        {
+            return edges[1] ? edges[1]->getBlock(16 - x, 16 + y, z) : Blocks::Bedrock;
+        }
+        else if (z < 0)
+        {
+            return edges[2] ? edges[2]->getBlock(x, 16 + y, 16 + z) : Blocks::Bedrock;
+        }
+        else if (z > 15)
+        {
+            return edges[3] ? edges[3]->getBlock(x, 16 + y, 16 - z) : Blocks::Bedrock;
+        }
+        else
+        {
+            return chunks[3] ? chunks[3]->getBlock(x, 16 + y, z) : Blocks::Bedrock;
+        }
+    }
+    else if (x < 0)
     {
         if (chunks[1] != nullptr) return chunks[1]->getBlock(16 + x, y, z);
         else return Blocks::Bedrock;
@@ -191,11 +219,6 @@ static int getBlock(Chunk *chunks[7], int x, int y, int z)
     else if (x > 15)
     {
         if (chunks[2] != nullptr) return chunks[2]->getBlock(16 - x, y, z);
-        else return Blocks::Bedrock;
-    }
-    else if (y < 0)
-    {
-        if (chunks[3] != nullptr) return chunks[3]->getBlock(x, 16 + y, z);
         else return Blocks::Bedrock;
     }
     else if (y > 15)
@@ -226,49 +249,69 @@ bool Game::collide(glm::vec3 &pos)
         return hitY;
 
     Chunk *neighbors[7] = { nullptr };
+    Chunk *edges[4] = { nullptr };
 
     glm::vec3 integral(16.0f);
     glm::vec3 n = glm::round(pos);
     glm::ivec3 ipos = glm::mod(n, integral);
     glm::vec3 f = pos - n;
     float pad = 0.25f;
-    int h = 1;
+    int h = 2;
+
+    //std::cout << glm::to_string(ipos) << std::endl;
 
     neighbors[0] = c;
     if (ipos.x == 0) neighbors[1] = getChunk(m_chunks, c->getCoords() - glm::ivec3(1, 0, 0));
     if (ipos.x == 15) neighbors[2] = getChunk(m_chunks, c->getCoords() + glm::ivec3(1, 0, 0));
-    if (ipos.y == 0) neighbors[3] = getChunk(m_chunks, c->getCoords() - glm::ivec3(0, 1, 0));
+    if (ipos.y <= h - 1) neighbors[3] = getChunk(m_chunks, c->getCoords() - glm::ivec3(0, 1, 0));
     if (ipos.y == 15) neighbors[4] = getChunk(m_chunks, c->getCoords() + glm::ivec3(0, 1, 0));
     if (ipos.z == 0) neighbors[5] = getChunk(m_chunks, c->getCoords() - glm::ivec3(0, 0, 1));
     if (ipos.z == 15) neighbors[6] = getChunk(m_chunks, c->getCoords() + glm::ivec3(0, 0, 1));
+    
+    if (ipos.y < h - 1)
+    {
+        edges[0] = getChunk(m_chunks, c->getCoords() + glm::ivec3(-1, -1, 0));
+        edges[1] = getChunk(m_chunks, c->getCoords() + glm::ivec3(1, -1, 0));
+        edges[2] = getChunk(m_chunks, c->getCoords() + glm::ivec3(0, -1, -1));
+        edges[3] = getChunk(m_chunks, c->getCoords() + glm::ivec3(0, -1, 1));
+    }
+    
+    for (int y = 0; y < h; y++)
+    {
+        if (f.x < -pad && 
+            Blocks::isSolid(getBlock(neighbors, edges, ipos.x - 1, ipos.y - y, ipos.z)))
+        {
+            pos.x = n.x - pad;
+        }
+        if (f.x > pad && 
+            Blocks::isSolid(getBlock(neighbors, edges, ipos.x + 1, ipos.y - y, ipos.z)))
+        {
+            pos.x = n.x + pad;
+        }
 
-    if (f.x < -pad && Blocks::isSolid(getBlock(neighbors, ipos.x - 1, ipos.y, ipos.z)))
-    {
-        pos.x = n.x - pad;
-    }
-    if (f.x > pad && Blocks::isSolid(getBlock(neighbors, ipos.x + 1, ipos.y, ipos.z)))
-    {
-        pos.x = n.x + pad;
-    }
+        if (f.y < -pad && 
+            Blocks::isSolid(getBlock(neighbors, edges, ipos.x, ipos.y - y - 1, ipos.z)))
+        {
+            pos.y = n.y - pad;
+            hitY = true;
+        }
+        if (f.y > pad && 
+            Blocks::isSolid(getBlock(neighbors, edges, ipos.x, ipos.y - y + 1, ipos.z)))
+        {
+            pos.y = n.y + pad;
+            hitY = true;
+        }
 
-    if (f.y < -pad && Blocks::isSolid(getBlock(neighbors, ipos.x, ipos.y - 1, ipos.z)))
-    {
-        pos.y = n.y - pad;
-        hitY = true;
-    }
-    if (f.y > pad && Blocks::isSolid(getBlock(neighbors, ipos.x, ipos.y + 1, ipos.z)))
-    {
-        pos.y = n.y + pad;
-        hitY = true;
-    }
-
-    if (f.z < -pad && Blocks::isSolid(getBlock(neighbors, ipos.x, ipos.y, ipos.z - 1)))
-    {
-        pos.z = n.z - pad;
-    }
-    if (f.z > pad && Blocks::isSolid(getBlock(neighbors, ipos.x, ipos.y, ipos.z + 1)))
-    {
-        pos.z = n.z + pad;
+        if (f.z < -pad && 
+            Blocks::isSolid(getBlock(neighbors, edges, ipos.x, ipos.y - y, ipos.z - 1)))
+        {
+            pos.z = n.z - pad;
+        }
+        if (f.z > pad && 
+            Blocks::isSolid(getBlock(neighbors, edges, ipos.x, ipos.y - y, ipos.z + 1)))
+        {
+            pos.z = n.z + pad;
+        }
     }
 
     return hitY;
@@ -319,7 +362,7 @@ void Game::updatePlayer(float dt)
     vel *= ut * speed;
     for (int i = 0; i < steps; i++)
     {
-        m_vel.y -= ut * 15.0f;
+        m_vel.y -= ut * 20.0f;
         m_vel.y = (std::max)(m_vel.y, -250.0f);
 
         m_pos += vel + m_vel * ut;
@@ -415,12 +458,15 @@ void Game::initChunks()
 
 Chunk *Game::chunkFromWorld(const glm::vec3 &pos)
 {
-    glm::vec3 toChunk = pos / 16.0f;
-    int x = static_cast<int>(std::floorf(toChunk.x));
-    int y = static_cast<int>(std::floorf(toChunk.y));
-    int z = static_cast<int>(std::floorf(toChunk.z));
+    //glm::vec3 toChunk = pos / 16.0f;
+    //int x = static_cast<int>(std::floorf(toChunk.x));
+    //int y = static_cast<int>(std::floorf(toChunk.y));
+    //int z = static_cast<int>(std::floorf(toChunk.z));
 
-    auto chunk = m_chunks.find(glm::ivec3(x, y, z));
+    glm::ivec3 coords = glm::floor(glm::round(pos) / 16.0f);
+
+
+    auto chunk = m_chunks.find(coords);
     if (chunk != m_chunks.end())
     {
         return chunk->second.get();
