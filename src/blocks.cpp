@@ -54,3 +54,11 @@ bool Blocks::isLight(int type)
         return false;
     }
 }
+
+bool Blocks::isSolid(int type)
+{
+    if (isPlant(type) || type == Air)
+        return false;
+
+    return true;
+}

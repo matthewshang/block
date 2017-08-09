@@ -19,9 +19,9 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
     input->handleKey(key, action);
 }
 
-Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 49, -28)),
+Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 52, -28)),
     m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed(),
-    m_renderer(m_chunks), m_pos(-88, 49, -28), m_vel(0)
+    m_renderer(m_chunks), m_pos(-88, 51, -28), m_vel(0)
 {
     m_eraseDistance = sqrtf(3 * (pow(16 * m_loadDistance, 2))) + 32.0f;
     glfwSetWindowUserPointer(window, &m_input);
@@ -108,7 +108,7 @@ void Game::processInput(float dt)
             glm::vec3 a = glm::floor(pos);
             glm::ivec3 local(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(a.z));
             local = glm::ivec3((local.x % 16 + 16) % 16, (local.y % 16 + 16) % 16, (local.z % 16 + 16) % 16);
-            std::cout << "place: " << local.x << ", " << local.y << ", " << local.z << std::endl;
+            //std::cout << "place: " << local.x << ", " << local.y << ", " << local.z << std::endl;
             bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
             c->setBlock(local.x, 
                         local.y,
@@ -168,53 +168,165 @@ void Game::updateChunks()
     m_updates.clear();
 }
 
+static Chunk *getChunk(ChunkMap &chunks, glm::ivec3 coords)
+{
+    auto chunk = chunks.find(coords);
+    if (chunk != chunks.end())
+    {
+        return chunk->second.get();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+static int getBlock(Chunk *chunks[7], int x, int y, int z)
+{
+    if (x < 0)
+    {
+        if (chunks[1] != nullptr) return chunks[1]->getBlock(16 + x, y, z);
+        else return Blocks::Bedrock;
+    }
+    else if (x > 15)
+    {
+        if (chunks[2] != nullptr) return chunks[2]->getBlock(16 - x, y, z);
+        else return Blocks::Bedrock;
+    }
+    else if (y < 0)
+    {
+        if (chunks[3] != nullptr) return chunks[3]->getBlock(x, 16 + y, z);
+        else return Blocks::Bedrock;
+    }
+    else if (y > 15)
+    {
+        if (chunks[4] != nullptr) return chunks[4]->getBlock(x, 16 - y, z);
+        else return Blocks::Bedrock;
+    }
+    else if (z < 0)
+    {
+        if (chunks[5] != nullptr) return chunks[5]->getBlock(x, y, 16 + z);
+        else return Blocks::Bedrock;
+    }
+    else if (z > 15)
+    {
+        if (chunks[6] != nullptr) return chunks[6]->getBlock(x, y, 16 - z);
+        else return Blocks::Bedrock;
+    }
+
+    return chunks[0]->getBlock(x, y, z);
+}
+
+bool Game::collide(glm::vec3 &pos)
+{
+    bool hitY = false;
+    glm::ivec3 coords = glm::floor(glm::round(pos) / 16.0f);
+    Chunk *c = getChunk(m_chunks, coords);
+    if (c == nullptr)
+        return hitY;
+
+    Chunk *neighbors[7] = { nullptr };
+
+    glm::vec3 integral(16.0f);
+    glm::vec3 n = glm::round(pos);
+    glm::ivec3 ipos = glm::mod(n, integral);
+    glm::vec3 f = pos - n;
+    float pad = 0.25f;
+    int h = 1;
+
+    neighbors[0] = c;
+    if (ipos.x == 0) neighbors[1] = getChunk(m_chunks, c->getCoords() - glm::ivec3(1, 0, 0));
+    if (ipos.x == 15) neighbors[2] = getChunk(m_chunks, c->getCoords() + glm::ivec3(1, 0, 0));
+    if (ipos.y == 0) neighbors[3] = getChunk(m_chunks, c->getCoords() - glm::ivec3(0, 1, 0));
+    if (ipos.y == 15) neighbors[4] = getChunk(m_chunks, c->getCoords() + glm::ivec3(0, 1, 0));
+    if (ipos.z == 0) neighbors[5] = getChunk(m_chunks, c->getCoords() - glm::ivec3(0, 0, 1));
+    if (ipos.z == 15) neighbors[6] = getChunk(m_chunks, c->getCoords() + glm::ivec3(0, 0, 1));
+
+    if (f.x < -pad && Blocks::isSolid(getBlock(neighbors, ipos.x - 1, ipos.y, ipos.z)))
+    {
+        pos.x = n.x - pad;
+    }
+    if (f.x > pad && Blocks::isSolid(getBlock(neighbors, ipos.x + 1, ipos.y, ipos.z)))
+    {
+        pos.x = n.x + pad;
+    }
+
+    if (f.y < -pad && Blocks::isSolid(getBlock(neighbors, ipos.x, ipos.y - 1, ipos.z)))
+    {
+        pos.y = n.y - pad;
+        hitY = true;
+    }
+    if (f.y > pad && Blocks::isSolid(getBlock(neighbors, ipos.x, ipos.y + 1, ipos.z)))
+    {
+        pos.y = n.y + pad;
+        hitY = true;
+    }
+
+    if (f.z < -pad && Blocks::isSolid(getBlock(neighbors, ipos.x, ipos.y, ipos.z - 1)))
+    {
+        pos.z = n.z - pad;
+    }
+    if (f.z > pad && Blocks::isSolid(getBlock(neighbors, ipos.x, ipos.y, ipos.z + 1)))
+    {
+        pos.z = n.z + pad;
+    }
+
+    return hitY;
+}
+
+
 void Game::updatePlayer(float dt)
 {
     glm::vec3 f;
 
+    glm::vec3 vel;
+
     if (m_input.keyPressed(GLFW_KEY_W))
     {
-        f += m_camera.getFront() * 7.0f;
+        vel += m_camera.getFront();
     }
     if (m_input.keyPressed(GLFW_KEY_S))
     {
-        f -= m_camera.getFront() * 7.0f;
+        vel -= m_camera.getFront();
     }
     if (m_input.keyPressed(GLFW_KEY_A))
     {
-        f -= m_camera.getRight() * 7.0f;
+        vel -= m_camera.getRight();
     }
     if (m_input.keyPressed(GLFW_KEY_D))
     {
-        f += m_camera.getRight() * 7.0f;
+        vel += m_camera.getRight();
     }
     if (m_input.keyPressed(GLFW_KEY_SPACE))
     {
-        f += glm::vec3(0, 7.0f, 0);
+        //vel += glm::vec3(0.0f, 1.0f, 0.0f);
+       if (m_vel.y == 0.0f) m_vel.y += 8.0f;
     }
     if (m_input.keyPressed(GLFW_KEY_LEFT_SHIFT))
     {
-        f -= glm::vec3(0, 7.0f, 0);
+        vel -= glm::vec3(0.0f, 1.0f, 0.0f);
     }
 
-    Chunk *c = chunkFromWorld(m_pos);
-    if (c)
+    if (glm::length(vel) > 0)
     {
-        glm::vec3 a = glm::floor(m_pos);
-        glm::ivec3 local(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(a.z));
-        local = glm::ivec3((local.x % 16 + 16) % 16, (local.y % 16 + 16) % 16, (local.z % 16 + 16) % 16);
-
-        std::cout << (c->getBlock(local.x, local.y, local.z) == Blocks::Air) << std::endl;
+        vel = glm::normalize(vel);
     }
 
+    // based on github.com/fogleman/Craft
+    float speed = 5.0f;
+    int steps = 8;
+    float ut = dt / static_cast<float>(steps);
+    vel *= ut * speed;
+    for (int i = 0; i < steps; i++)
+    {
+        m_vel.y -= ut * 15.0f;
+        m_vel.y = (std::max)(m_vel.y, -250.0f);
 
-    float d = 1.9f;
-    f += m_vel * -0.5f * d;
+        m_pos += vel + m_vel * ut;
 
-    glm::vec3 accel = f;
-
-    m_vel += accel * dt;
-    m_pos += m_vel * dt;
+        if (collide(m_pos))
+            m_vel.y = 0.0f;
+    }
 
     m_camera.setPos(m_pos);
 }

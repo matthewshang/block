@@ -24,4 +24,5 @@ namespace Blocks
     bool isTransparent(int type);
     bool isPlant(int type);
     bool isLight(int type);
+    bool isSolid(int type);
 }

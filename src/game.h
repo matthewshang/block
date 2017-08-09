@@ -28,6 +28,7 @@ public:
 private:
     void processInput(float dt);
     void updateChunks();
+    bool collide(glm::vec3 &pos);
     void updatePlayer(float dt);
 
     void updateChunk(Chunk *chunk);

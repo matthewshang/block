@@ -95,9 +95,6 @@
     <ClInclude Include="..\src\terraingenerator.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\timer.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -111,6 +108,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\inputmanager.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
