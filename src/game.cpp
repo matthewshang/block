@@ -22,7 +22,7 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
 
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -28)),
     m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed(),
-    m_renderer(m_chunks), m_pos(-88, 54, -28), m_vel(0)
+    m_renderer(m_chunks), m_pos(-88, 54, -28), m_vel(0), m_flying(false)
 {
     m_eraseDistance = sqrtf(3 * (pow(16 * m_loadDistance, 2))) + 32.0f;
     glfwSetWindowUserPointer(window, &m_input);
@@ -41,6 +41,9 @@ void Game::run()
 
     while (!glfwWindowShouldClose(m_window))
     {
+        glfwPollEvents();
+        m_input.update(dt);
+
         processInput(dt);
 
         updateChunks();
@@ -53,7 +56,6 @@ void Game::run()
         m_renderer.render(m_camera);
 
         glfwSwapBuffers(m_window);
-        glfwPollEvents();
 
         double current = glfwGetTime();
         dt = static_cast<float>(current - lastFrame);
@@ -190,51 +192,31 @@ static int getBlock(Chunk *chunks[7], Chunk *edges[4], int x, int y, int z)
 {
     if (y < 0)
     {
-        if (x < 0)
-        {
-            return edges[0] ? edges[0]->getBlock(16 + x, 16 + y, z) : Blocks::Bedrock;
-        }
-        else if (x > 15)
-        {
-            return edges[1] ? edges[1]->getBlock(16 - x, 16 + y, z) : Blocks::Bedrock;
-        }
-        else if (z < 0)
-        {
-            return edges[2] ? edges[2]->getBlock(x, 16 + y, 16 + z) : Blocks::Bedrock;
-        }
-        else if (z > 15)
-        {
-            return edges[3] ? edges[3]->getBlock(x, 16 + y, 16 - z) : Blocks::Bedrock;
-        }
-        else
-        {
-            return chunks[3] ? chunks[3]->getBlock(x, 16 + y, z) : Blocks::Bedrock;
-        }
+        if (x < 0)       return edges[0] ? edges[0]->getBlock(16 + x, 16 + y, z) : Blocks::Bedrock;
+        else if (x > 15) return edges[1] ? edges[1]->getBlock(16 - x, 16 + y, z) : Blocks::Bedrock;
+        else if (z < 0)  return edges[2] ? edges[2]->getBlock(x, 16 + y, 16 + z) : Blocks::Bedrock;
+        else if (z > 15) return edges[3] ? edges[3]->getBlock(x, 16 + y, 16 - z) : Blocks::Bedrock;
+        else             return chunks[3] ? chunks[3]->getBlock(x, 16 + y, z) : Blocks::Bedrock;
     }
     else if (x < 0)
     {
-        if (chunks[1] != nullptr) return chunks[1]->getBlock(16 + x, y, z);
-        else return Blocks::Bedrock;
+        return chunks[1] ? chunks[1]->getBlock(16 + x, y, z) : Blocks::Bedrock;
     }
     else if (x > 15)
     {
-        if (chunks[2] != nullptr) return chunks[2]->getBlock(16 - x, y, z);
-        else return Blocks::Bedrock;
+        return chunks[2] ? chunks[2]->getBlock(16 - x, y, z) : Blocks::Bedrock;
     }
     else if (y > 15)
     {
-        if (chunks[4] != nullptr) return chunks[4]->getBlock(x, 16 - y, z);
-        else return Blocks::Bedrock;
+        return chunks[4] ? chunks[4]->getBlock(x, 16 - y, z) : Blocks::Bedrock;
     }
     else if (z < 0)
     {
-        if (chunks[5] != nullptr) return chunks[5]->getBlock(x, y, 16 + z);
-        else return Blocks::Bedrock;
+        return chunks[5] ? chunks[5]->getBlock(x, y, 16 + z) : Blocks::Bedrock;
     }
     else if (z > 15)
     {
-        if (chunks[6] != nullptr) return chunks[6]->getBlock(x, y, 16 - z);
-        else return Blocks::Bedrock;
+        return chunks[6] ? chunks[6]->getBlock(x, y, 16 - z) : Blocks::Bedrock;
     }
 
     return chunks[0]->getBlock(x, y, z);
@@ -257,8 +239,6 @@ bool Game::collide(glm::vec3 &pos)
     glm::vec3 f = pos - n;
     float pad = 0.25f;
     int h = 2;
-
-    //std::cout << glm::to_string(ipos) << std::endl;
 
     neighbors[0] = c;
     if (ipos.x == 0) neighbors[1] = getChunk(m_chunks, c->getCoords() - glm::ivec3(1, 0, 0));
@@ -320,17 +300,24 @@ bool Game::collide(glm::vec3 &pos)
 
 void Game::updatePlayer(float dt)
 {
-    glm::vec3 f;
-
     glm::vec3 vel;
+    glm::vec3 front = -glm::cross(m_camera.getRight(), glm::vec3(0, 1, 0));
+    bool switched = false;
+
+    if (m_input.keyDoublePressed(GLFW_KEY_SPACE, 0.25f))
+    {
+        std::cout << "double" << std::endl;
+        m_flying = !m_flying;
+        switched = true;
+    }
 
     if (m_input.keyPressed(GLFW_KEY_W))
     {
-        vel += m_camera.getFront();
+        vel += front;
     }
     if (m_input.keyPressed(GLFW_KEY_S))
     {
-        vel -= m_camera.getFront();
+        vel -= front;
     }
     if (m_input.keyPressed(GLFW_KEY_A))
     {
@@ -342,12 +329,21 @@ void Game::updatePlayer(float dt)
     }
     if (m_input.keyPressed(GLFW_KEY_SPACE))
     {
-        //vel += glm::vec3(0.0f, 1.0f, 0.0f);
-       if (m_vel.y == 0.0f) m_vel.y += 8.0f;
+        if (m_flying)
+        {
+            vel += glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+        else if (m_vel.y == 0.0f && !switched)
+        {
+            m_vel.y += 8.0f;
+        }
     }
     if (m_input.keyPressed(GLFW_KEY_LEFT_SHIFT))
     {
-        vel -= glm::vec3(0.0f, 1.0f, 0.0f);
+        if (m_flying)
+        {
+            vel -= glm::vec3(0.0f, 1.0f, 0.0f);
+        }
     }
 
     if (glm::length(vel) > 0)
@@ -356,14 +352,21 @@ void Game::updatePlayer(float dt)
     }
 
     // based on github.com/fogleman/Craft
-    float speed = 5.0f;
+    float speed = m_flying ? 15.0f : 5.0f;
     int steps = 8;
     float ut = dt / static_cast<float>(steps);
     vel *= ut * speed;
     for (int i = 0; i < steps; i++)
     {
-        m_vel.y -= ut * 20.0f;
-        m_vel.y = (std::max)(m_vel.y, -250.0f);
+        if (m_flying)
+        {
+            m_vel.y = 0.0f;
+        }
+        else
+        {
+            m_vel.y -= ut * 20.0f;
+            m_vel.y = (std::max)(m_vel.y, -250.0f);
+        }
 
         m_pos += vel + m_vel * ut;
 

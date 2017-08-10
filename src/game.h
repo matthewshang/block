@@ -56,6 +56,7 @@ private:
     Camera m_camera;
     glm::vec3 m_pos;
     glm::vec3 m_vel;
+    bool m_flying;
 
     double m_lastX;
     double m_lastY;
