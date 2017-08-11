@@ -235,6 +235,7 @@ void Game::processInput(float dt)
 {
     m_input.update(dt);
     m_cooldown += dt;
+    m_flyCooldown += dt;
 
     if (m_input.keyPressed(GLFW_KEY_ESCAPE))
     {
@@ -439,10 +440,10 @@ void Game::updatePlayer(float dt)
     glm::vec3 front = -glm::cross(m_camera.getRight(), glm::vec3(0, 1, 0));
     bool switched = false;
 
-    if (m_input.keyDoublePressed(GLFW_KEY_SPACE, 0.25f))
+    if (m_input.keyDoublePressed(GLFW_KEY_SPACE, 0.25f) && m_flyCooldown > 0.4f)
     {
-        std::cout << "double" << std::endl;
         m_flying = !m_flying;
+        m_flyCooldown = 0.0f;
         switched = true;
     }
 

@@ -61,6 +61,7 @@ private:
     glm::vec3 m_vel;
     bool m_flying;
     float m_cooldown;
+    float m_flyCooldown;
 
     double m_lastX;
     double m_lastY;
