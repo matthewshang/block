@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/integer.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -27,6 +28,29 @@ Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -
     m_eraseDistance = sqrtf(3 * (pow(16 * m_loadDistance, 2))) + 32.0f;
     glfwSetWindowUserPointer(window, &m_input);
     glfwSetKeyCallback(window, key_callback);
+
+    //float pi = 3.14159265358979323846f;
+    //for (float theta = 0; theta < pi * 2.0f; theta += 0.25f)
+    //{
+    //    for (float phi = 0; phi < pi; phi += 0.25f)
+    //    {
+    //        glm::vec3 dir(cosf(theta) * cosf(phi),
+    //            sinf(theta) * cosf(phi),
+    //            sinf(phi));
+    //        float min = 0.001f;
+    //        for (float x = min; x < 1.0f; x += 0.25f)
+    //        {
+    //            for (float y = min; y < 1.0f; y += 0.25f)
+    //            {
+    //                for (float z = min; z < 1.0f; z += 0.25f)
+    //                {
+    //                    glm::vec3 pos(x - 2.0f * dir.x, y - 2.0f * dir.y, z - 2.0f * dir.z);
+    //                    raycast(pos, dir, 10.0f, 1);
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 }
 
 void Game::run()
@@ -42,7 +66,6 @@ void Game::run()
     while (!glfwWindowShouldClose(m_window))
     {
         glfwPollEvents();
-        m_input.update(dt);
 
         processInput(dt);
 
@@ -79,8 +102,153 @@ void Game::run()
     }
 }
 
+static float myceil(float s)
+{
+    if (s == 0.0f) return 1.0f;
+    else return std::ceilf(s);
+}
+
+static float intbound(float s, float ds)
+{
+    bool isInt = std::roundf(s) == s;
+    if (ds < 0 && isInt)
+        return 0;
+
+    return (ds > 0 ? myceil(s) - s : s - std::floorf(s)) / std::fabsf(ds);
+}
+
+static Chunk *getChunk(ChunkMap &chunks, glm::ivec3 coords)
+{
+    auto chunk = chunks.find(coords);
+    if (chunk != chunks.end())
+    {
+        return chunk->second.get();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+int Game::getVoxel(const glm::ivec3 &i)
+{
+    glm::ivec3 coords = glm::floor(static_cast<glm::vec3>(i) / 16.0f);
+    Chunk *c = getChunk(m_chunks, coords);
+    if (c == nullptr)
+        return Blocks::Air;
+   
+    glm::vec3 integral(16.0f);
+    glm::vec3 n = i;
+    glm::ivec3 ipos = glm::mod(n, integral);
+    return c->getBlock(ipos.x, ipos.y, ipos.z);
+}
+
+int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::vec3 &hitPos, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos)
+{
+    float inf = std::numeric_limits<float>::infinity();
+    float t = 0.0f;
+    glm::ivec3 i = glm::floor(p);
+    glm::ivec3 step(dir.x > 0 ? 1 : -1, 
+                    dir.y > 0 ? 1 : -1, 
+                    dir.z > 0 ? 1 : -1);
+    glm::vec3 delta((dir.x == 0.0f) ? inf : std::fabsf(1.0f / dir.x),
+                    (dir.y == 0.0f) ? inf : std::fabsf(1.0f / dir.y),
+                    (dir.z == 0.0f) ? inf : std::fabsf(1.0f / dir.z));
+    glm::vec3 dist((step.x > 0) ? (i.x + 1.0f - p.x) : (p.x - i.x),
+                   (step.y > 0) ? (i.y + 1.0f - p.y) : (p.y - i.y),
+                   (step.z > 0) ? (i.z + 1.0f - p.z) : (p.z - i.z));
+    glm::vec3 max((delta.x < inf) ? delta.x * dist.x : inf,
+                  (delta.y < inf) ? delta.y * dist.y : inf,
+                  (delta.z < inf) ? delta.z * dist.z : inf);
+    int idx = -1;
+
+    while (t <= range)
+    {
+        int b = getVoxel(i);
+        if (b != Blocks::Air)
+        {
+            hitPos = p + t * dir;
+            hitIpos = i;
+            hitNorm = glm::ivec3(0);
+            if (idx == 0) hitNorm.x = -step.x;
+            if (idx == 1) hitNorm.y = -step.y;
+            if (idx == 2) hitNorm.z = -step.z;
+            return b;
+        }
+
+        if (max.x < max.y)
+        {
+            if (max.x < max.z)
+            {
+                i.x += step.x;
+                t = max.x;
+                max.x += delta.x;
+                idx = 0;
+            }
+            else
+            {
+                i.z += step.z;
+                t = max.z;
+                max.z += delta.z;
+                idx = 2;
+            }
+        }
+        else
+        {
+            if (max.y < max.z)
+            {
+                i.y += step.y;
+                t = max.y;
+                max.y += delta.y;
+                idx = 1;
+            }
+            else
+            {
+                i.z += step.z;
+                t = max.z;
+                max.z += delta.z;
+                idx = 2;
+            }
+        }
+    }
+
+    hitPos = p + t * dir;
+    hitNorm = glm::ivec3(0);
+
+    return Blocks::Air;
+}
+
+void Game::raycast(glm::vec3 p, glm::vec3 dir, float range, int block)
+{
+    float ds = glm::length(dir);
+    if (ds == 0.0f)
+        return;
+
+    dir /= ds;
+    glm::vec3 pos;
+    glm::ivec3 norm, ipos;
+    int type = traceRay(p, dir, range, pos, norm, ipos);
+    std::cout << "raycast: " << (type != Blocks::Air) << std::endl;
+    //if (type) std::cout << "raycast pos: " << glm::to_string(pos) << std::endl;
+    //if (type) std::cout << "raycast ipos: " << glm::to_string(ipos) << std::endl;
+
+    //if (type) std::cout << "raycast norm: " << glm::to_string(norm) << std::endl;
+
+    glm::ivec3 coords = glm::floor(static_cast<glm::vec3>(ipos) / 16.0f);
+    Chunk *c = getChunk(m_chunks, coords);
+    if (c == nullptr)
+        return;
+
+    glm::vec3 integral(16.0f);
+    glm::vec3 n = ipos + norm;
+    glm::ivec3 ipos2 = glm::mod(n, integral);
+    c->setBlock(ipos2.x, ipos2.y, ipos2.z, Blocks::Sand);
+}
+
 void Game::processInput(float dt)
 {
+    m_input.update(dt);
+
     if (m_input.keyPressed(GLFW_KEY_ESCAPE))
     {
         glfwSetWindowShouldClose(m_window, true);
@@ -108,20 +276,23 @@ void Game::processInput(float dt)
     if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
         glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
     {
-        const glm::vec3 &pos = m_camera.getPos();
-        Chunk *c = chunkFromWorld(pos);
-        if (c != nullptr)
-        {
-            glm::vec3 a = glm::floor(pos);
-            glm::ivec3 local(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(a.z));
-            local = glm::ivec3((local.x % 16 + 16) % 16, (local.y % 16 + 16) % 16, (local.z % 16 + 16) % 16);
-            //std::cout << "place: " << local.x << ", " << local.y << ", " << local.z << std::endl;
-            bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-            c->setBlock(local.x, 
-                        local.y,
-                        local.z, left ? Blocks::Air : Blocks::Glowstone);
-            dirtyChunks(c->getCoords());
-        }
+        bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+
+        raycast(m_pos, m_camera.getFront(), 12, left ? Blocks::Air : Blocks::Glowstone);
+
+        //const glm::vec3 &pos = m_camera.getPos();
+        //Chunk *c = chunkFromWorld(pos);
+        //if (c != nullptr)
+        //{
+        //    glm::vec3 a = glm::floor(pos);
+        //    glm::ivec3 local(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(a.z));
+        //    local = glm::ivec3((local.x % 16 + 16) % 16, (local.y % 16 + 16) % 16, (local.z % 16 + 16) % 16);
+        //    //std::cout << "place: " << local.x << ", " << local.y << ", " << local.z << std::endl;
+        //    c->setBlock(local.x, 
+        //                local.y,
+        //                local.z, left ? Blocks::Air : Blocks::Glowstone);
+        //    dirtyChunks(c->getCoords());
+        //}
     }
 }
 
@@ -173,19 +344,6 @@ void Game::updateChunks()
 
     m_updates.for_each(update);
     m_updates.clear();
-}
-
-static Chunk *getChunk(ChunkMap &chunks, glm::ivec3 coords)
-{
-    auto chunk = chunks.find(coords);
-    if (chunk != chunks.end())
-    {
-        return chunk->second.get();
-    }
-    else
-    {
-        return nullptr;
-    }
 }
 
 static int getBlock(Chunk *chunks[7], Chunk *edges[4], int x, int y, int z)

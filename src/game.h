@@ -26,6 +26,9 @@ public:
     void run();
 
 private:
+    int getVoxel(const glm::ivec3 &i);
+    int traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::vec3 &hitPos, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos);
+    void raycast(glm::vec3 origin, glm::vec3 dir, float range, int block);
     void processInput(float dt);
     void updateChunks();
     bool collide(glm::vec3 &pos);
