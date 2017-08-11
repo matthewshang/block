@@ -102,21 +102,6 @@ void Game::run()
     }
 }
 
-static float myceil(float s)
-{
-    if (s == 0.0f) return 1.0f;
-    else return std::ceilf(s);
-}
-
-static float intbound(float s, float ds)
-{
-    bool isInt = std::roundf(s) == s;
-    if (ds < 0 && isInt)
-        return 0;
-
-    return (ds > 0 ? myceil(s) - s : s - std::floorf(s)) / std::fabsf(ds);
-}
-
 static Chunk *getChunk(ChunkMap &chunks, glm::ivec3 coords)
 {
     auto chunk = chunks.find(coords);
@@ -143,8 +128,9 @@ int Game::getVoxel(const glm::ivec3 &i)
     return c->getBlock(ipos.x, ipos.y, ipos.z);
 }
 
-int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::vec3 &hitPos, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos)
+int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos)
 {
+    // github.com/andyhall/fast-voxel-raycast/blob/master/index.js
     float inf = std::numeric_limits<float>::infinity();
     float t = 0.0f;
     glm::ivec3 i = glm::floor(p);
@@ -167,7 +153,6 @@ int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::vec3 &hitPos, g
         int b = getVoxel(i);
         if (b != Blocks::Air)
         {
-            hitPos = p + t * dir;
             hitIpos = i;
             hitNorm = glm::ivec3(0);
             if (idx == 0) hitNorm.x = -step.x;
@@ -212,8 +197,8 @@ int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::vec3 &hitPos, g
         }
     }
 
-    hitPos = p + t * dir;
     hitNorm = glm::ivec3(0);
+    hitIpos = i;
 
     return Blocks::Air;
 }
@@ -225,29 +210,31 @@ void Game::raycast(glm::vec3 p, glm::vec3 dir, float range, int block)
         return;
 
     dir /= ds;
-    glm::vec3 pos;
     glm::ivec3 norm, ipos;
-    int type = traceRay(p, dir, range, pos, norm, ipos);
-    std::cout << "raycast: " << (type != Blocks::Air) << std::endl;
+    int type = traceRay(p, dir, range, norm, ipos);
+    //std::cout << "raycast: " << (type != Blocks::Air) << std::endl;
     //if (type) std::cout << "raycast pos: " << glm::to_string(pos) << std::endl;
     //if (type) std::cout << "raycast ipos: " << glm::to_string(ipos) << std::endl;
-
     //if (type) std::cout << "raycast norm: " << glm::to_string(norm) << std::endl;
 
-    glm::ivec3 coords = glm::floor(static_cast<glm::vec3>(ipos) / 16.0f);
-    Chunk *c = getChunk(m_chunks, coords);
-    if (c == nullptr)
-        return;
+    if (type != Blocks::Air)
+    {
+        glm::vec3 rpos = block == Blocks::Air ? ipos : ipos + norm;
+        glm::ivec3 coords = glm::floor(rpos / 16.0f);
+        Chunk *c = getChunk(m_chunks, coords);
+        if (c == nullptr)
+            return;
 
-    glm::vec3 integral(16.0f);
-    glm::vec3 n = ipos + norm;
-    glm::ivec3 ipos2 = glm::mod(n, integral);
-    c->setBlock(ipos2.x, ipos2.y, ipos2.z, Blocks::Sand);
+        glm::vec3 integral(16.0f);
+        glm::ivec3 ipos2 = glm::mod(rpos, integral);
+        c->setBlock(ipos2.x, ipos2.y, ipos2.z, block);
+    }
 }
 
 void Game::processInput(float dt)
 {
     m_input.update(dt);
+    m_cooldown += dt;
 
     if (m_input.keyPressed(GLFW_KEY_ESCAPE))
     {
@@ -276,23 +263,13 @@ void Game::processInput(float dt)
     if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
         glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
     {
-        bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+        if (m_cooldown > 0.2f)
+        {
+            bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 
-        raycast(m_pos, m_camera.getFront(), 12, left ? Blocks::Air : Blocks::Glowstone);
-
-        //const glm::vec3 &pos = m_camera.getPos();
-        //Chunk *c = chunkFromWorld(pos);
-        //if (c != nullptr)
-        //{
-        //    glm::vec3 a = glm::floor(pos);
-        //    glm::ivec3 local(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(a.z));
-        //    local = glm::ivec3((local.x % 16 + 16) % 16, (local.y % 16 + 16) % 16, (local.z % 16 + 16) % 16);
-        //    //std::cout << "place: " << local.x << ", " << local.y << ", " << local.z << std::endl;
-        //    c->setBlock(local.x, 
-        //                local.y,
-        //                local.z, left ? Blocks::Air : Blocks::Glowstone);
-        //    dirtyChunks(c->getCoords());
-        //}
+            raycast(m_pos, m_camera.getFront(), 12, left ? Blocks::Air : Blocks::Glowstone);
+            m_cooldown = 0.0f;
+        }
     }
 }
 
