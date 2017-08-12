@@ -228,6 +228,7 @@ void Game::raycast(glm::vec3 p, glm::vec3 dir, float range, int block)
         glm::vec3 integral(16.0f);
         glm::ivec3 ipos2 = glm::mod(rpos, integral);
         c->setBlock(ipos2.x, ipos2.y, ipos2.z, block);
+        dirtyChunks(coords);
     }
 }
 
