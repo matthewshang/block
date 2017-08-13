@@ -15,6 +15,7 @@ public:
     void addJob(std::function<void()> job);
     void waitUntilCompleted();
     int getJobsAmount();
+    int getWorkerAmount();
 
 private:
     void getJob();

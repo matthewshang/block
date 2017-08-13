@@ -285,7 +285,7 @@ void Game::updateChunks()
                     auto neighbor = m_chunks.find(coords + glm::ivec3(x, y, z));
                     if (neighbor != m_chunks.end())
                     {
-                        neighbor->second->dirty();
+                        neighbor->second->setDirty(true);
                     }
                 }
             }
@@ -503,6 +503,7 @@ void Game::updateChunk(Chunk *chunk)
 
     if (chunk->isDirty())
     {
+        chunk->setDirty(false);
         auto update = [this, chunk]() -> void
         {
             auto compute = std::make_unique<ComputeJob>(*chunk, m_chunks);
@@ -523,7 +524,7 @@ void Game::dirtyChunks(glm::ivec3 center)
             {
                 auto neighbor = m_chunks.find(center + glm::ivec3(x, y, z));
                 if (neighbor != m_chunks.end())
-                    neighbor->second->dirty();
+                    neighbor->second->setDirty(true);
             }
         }
     }
@@ -532,6 +533,7 @@ void Game::dirtyChunks(glm::ivec3 center)
 void Game::loadChunks()
 {
     glm::ivec3 current = static_cast<glm::vec3>(glm::floor(m_camera.getPos() / 16.0f));
+    int maxJobs = m_pool.getWorkerAmount();
 
     for (int x = -m_loadDistance; x <= m_loadDistance; x++)
     {

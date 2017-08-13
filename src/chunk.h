@@ -27,7 +27,7 @@ public:
     void compute(ChunkMap &chunks);
 
     void bind();
-    void dirty() { m_dirty = true; };
+    void setDirty(bool dirty) { m_dirty = dirty; };
     bool isDirty() { return m_dirty; };
     int getVertexCount();
     bool isEmpty();

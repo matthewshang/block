@@ -44,6 +44,11 @@ int ThreadPool::getJobsAmount()
     return m_jobsPending;
 }
 
+int ThreadPool::getWorkerAmount()
+{
+    return m_workers.size();
+}
+
 void ThreadPool::getJob()
 {
     while (true)

@@ -6,7 +6,6 @@
 #include <glm/glm.hpp>
 
 #include "blocks.h"
-#include "timer.h"
 
 TerrainGenerator::TerrainGenerator() :
     m_highNoise(2, 0.023, 14, 2, 0.5), m_lowNoise(2, 0.017, 5, 2, 0.9),

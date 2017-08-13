@@ -16,19 +16,19 @@ private:
     class Plane
     {
     public:
-        void setPoints(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3);
-        void set(glm::vec3 &norm, glm::vec3 &p);
-        float distance(glm::vec3 &p);
+        void setPoints(const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec3 &v3);
+        void set(const glm::vec3 &norm, const glm::vec3 &p);
+        float distance(const glm::vec3 &p);
 
-        glm::vec3 &getNormal() { return m_normal; };
+        const glm::vec3 &getNormal() { return m_normal; };
 
     private:
         glm::vec3 m_normal, m_point;
         float m_d;
     };
 
-    glm::vec3 getMaxVert(glm::vec3 &corner, glm::vec3 &size, glm::vec3 &norm);
-    glm::vec3 getMinVert(glm::vec3 &corner, glm::vec3 &size, glm::vec3 &norm);
+    glm::vec3 getMaxVert(const glm::vec3 &corner, const glm::vec3 &size, const glm::vec3 &norm);
+    glm::vec3 getMinVert(const glm::vec3 &corner, const glm::vec3 &size, const glm::vec3 &norm);
 
     Plane m_p[6];
     glm::vec3 m_ntl, m_ntr, m_nbl, m_nbr, 
