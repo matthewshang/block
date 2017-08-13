@@ -12,8 +12,6 @@
 
 #include "blocks.h"
 #include "chunk.h"
-#include "shader.h"
-#include "texture.h"
 
 static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
@@ -29,28 +27,7 @@ Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -
     glfwSetWindowUserPointer(window, &m_input);
     glfwSetKeyCallback(window, key_callback);
 
-    //float pi = 3.14159265358979323846f;
-    //for (float theta = 0; theta < pi * 2.0f; theta += 0.25f)
-    //{
-    //    for (float phi = 0; phi < pi; phi += 0.25f)
-    //    {
-    //        glm::vec3 dir(cosf(theta) * cosf(phi),
-    //            sinf(theta) * cosf(phi),
-    //            sinf(phi));
-    //        float min = 0.001f;
-    //        for (float x = min; x < 1.0f; x += 0.25f)
-    //        {
-    //            for (float y = min; y < 1.0f; y += 0.25f)
-    //            {
-    //                for (float z = min; z < 1.0f; z += 0.25f)
-    //                {
-    //                    glm::vec3 pos(x - 2.0f * dir.x, y - 2.0f * dir.y, z - 2.0f * dir.z);
-    //                    raycast(pos, dir, 10.0f, 1);
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+    m_frustum.setInternals(45.0f, 1920.0f / 1080.0f, 0.1f, 150.0f);
 }
 
 void Game::run()
@@ -68,15 +45,17 @@ void Game::run()
         glfwPollEvents();
 
         processInput(dt);
+        updatePlayer(dt);
+
+        m_frustum.setCam(m_camera.getPos(), m_camera.getPos() + m_camera.getFront(), glm::vec3(0, 1, 0));
 
         updateChunks();
-        updatePlayer(dt);
 
         //float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.7f;
         float daylight = 0.25f;
         m_renderer.setSkyColor(skyColor * daylight);
         m_renderer.setDaylight(daylight);
-        m_renderer.render(m_camera);
+        m_renderer.render(m_camera, m_frustum);
 
         glfwSwapBuffers(m_window);
 
@@ -552,11 +531,7 @@ void Game::dirtyChunks(glm::ivec3 center)
 
 void Game::loadChunks()
 {
-    glm::vec3 toChunk = m_camera.getPos() / 16.0f;
-    glm::ivec3 current(
-        static_cast<int>(std::floorf(toChunk.x)),
-        static_cast<int>(std::floorf(toChunk.y)),
-        static_cast<int>(std::floorf(toChunk.z)));
+    glm::ivec3 current = static_cast<glm::vec3>(glm::floor(m_camera.getPos() / 16.0f));
 
     for (int x = -m_loadDistance; x <= m_loadDistance; x++)
     {

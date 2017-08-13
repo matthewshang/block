@@ -12,6 +12,7 @@
 #include "chunkcompare.h"
 #include "common.h"
 #include "computejob.h"
+#include "frustum.h"
 #include "inputmanager.h"
 #include "renderer.h"
 #include "sharedvector.h"
@@ -57,6 +58,7 @@ private:
 
     GLFWwindow *m_window;
     Camera m_camera;
+    Frustum m_frustum;
     glm::vec3 m_pos;
     glm::vec3 m_vel;
     bool m_flying;

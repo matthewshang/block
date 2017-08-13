@@ -4,6 +4,7 @@
 
 #include "camera.h"
 #include "chunk.h"
+#include "frustum.h"
 #include "shader.h"
 #include "texture.h"
 
@@ -12,7 +13,7 @@ class Renderer
 public:
     Renderer(ChunkMap &chunks);
 
-    void render(Camera &cam);
+    void render(Camera &cam, Frustum &f);
     void setSkyColor(glm::vec3 c) { m_skyColor = c; };
     void setDaylight(float daylight) { m_daylight = daylight; };
 

@@ -20,7 +20,7 @@ Renderer::Renderer(ChunkMap &chunks) :
     //glFrontFace(GL_CW);
 }
 
-void Renderer::render(Camera &cam)
+void Renderer::render(Camera &cam, Frustum &f)
 {
     glClearColor(m_skyColor.x, m_skyColor.y, m_skyColor.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -36,6 +36,10 @@ void Renderer::render(Camera &cam)
         auto &chunk = it.second;
         if (!chunk->isEmpty())
         {
+            glm::vec3 corner = chunk->getCoords() * 16;
+            if (!f.boxInFrustum(corner, glm::vec3(16)))
+                continue;
+
             chunk->bufferData();
             chunk->bind();
             glDrawArrays(GL_TRIANGLES, 0, chunk->getVertexCount());
