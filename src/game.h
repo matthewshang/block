@@ -31,14 +31,14 @@ private:
     int traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos);
     void raycast(glm::vec3 origin, glm::vec3 dir, float range, int block);
     void processInput(float dt);
+
+    void loadNearest(const glm::ivec3 &center, int maxJobs);
+    void updateNearest(const glm::ivec3 &center, int maxJobs);
     void updateChunks();
     bool collide(glm::vec3 &pos);
     void updatePlayer(float dt);
 
-    void updateChunk(Chunk *chunk);
     void dirtyChunks(glm::ivec3 center);
-    void loadChunks();
-    void initChunks();
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 
     const int m_loadDistance = 2;
