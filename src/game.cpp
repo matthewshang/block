@@ -35,21 +35,32 @@ void Game::run()
     glm::vec3 skyColor(135.0f, 206.0f, 250.0f);
     skyColor /= 255.0f;
 
-    float dt = 0.0f;
-    double lastFrame = 0.0f;
     long nFrames = 0;
-    double lastTime = 0.0f;
+    const double dt = 1.0 / 60.0;
+    double currentTime = glfwGetTime();
+    double lastTime = currentTime;
+    double accumulator = 0.0;
 
     while (!glfwWindowShouldClose(m_window))
     {
+        double newTime = glfwGetTime();
+        double frameTime = newTime - currentTime;
+        currentTime = newTime;
+        accumulator += frameTime;
+
         glfwPollEvents();
 
-        processInput(dt);
-        m_player.update(dt, m_chunks, m_input);
+        while (accumulator >= dt)
+        {
+            processInput(dt);
+            m_player.update(dt, m_chunks, m_input);
 
-        m_frustum.setCam(m_camera.getPos(), m_camera.getPos() + m_camera.getFront(), glm::vec3(0, 1, 0));
+            m_frustum.setCam(m_camera.getPos(), m_camera.getPos() + m_camera.getFront(), glm::vec3(0, 1, 0));
 
-        updateChunks();
+            updateChunks();
+
+            accumulator -= dt;
+        }
 
         //float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.7f;
         float daylight = 0.25f;
@@ -59,21 +70,14 @@ void Game::run()
 
         glfwSwapBuffers(m_window);
 
-        double current = glfwGetTime();
-        dt = static_cast<float>(current - lastFrame);
-        lastFrame = current;
-
         nFrames++;
-        if (current - lastTime > 1.0f)
+        if (currentTime - lastTime > 1.0f)
         {
-            glm::vec3 toChunk = m_camera.getPos() / 16.0f;
-            int x = static_cast<int>(std::floorf(toChunk.x));
-            int y = static_cast<int>(std::floorf(toChunk.y));
-            int z = static_cast<int>(std::floorf(toChunk.z));
+            glm::ivec3 ipos = glm::floor(m_camera.getPos() / 16.0f);
             char title[256];
             title[255] = '\0';
             snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [pos: %f, %f, %f] [chunk: %d %d %d]", nFrames, m_chunks.size(), m_pool.getJobsAmount(),
-                m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z, x, y, z);
+                m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z, ipos.x, ipos.y, ipos.z);
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
             nFrames = 0;
