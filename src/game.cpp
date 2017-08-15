@@ -27,7 +27,7 @@ Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -
     glfwSetWindowUserPointer(window, &m_input);
     glfwSetKeyCallback(window, key_callback);
 
-    m_frustum.setInternals(45.0f, 1920.0f / 1080.0f, 0.1f, 150.0f);
+    m_frustum.setInternals(45.0f, 1920.0f / 1080.0f, 0.1f, m_eraseDistance);
 }
 
 void Game::run()

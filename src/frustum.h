@@ -12,6 +12,11 @@ public:
     void setCam(const glm::vec3 &p, const glm::vec3 &l, const glm::vec3 &u);
     bool boxInFrustum(glm::vec3 &a, glm::vec3 &w);
 
+    float getFov() const { return m_angle; };
+    float getRatio() const { return m_ratio; };
+    float getNear() const { return m_nearD; };
+    float getFar() const { return m_farD; };
+
 private:
     class Plane
     {
