@@ -1,5 +1,7 @@
 #include "computejob.h"
 
+#include <iostream>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "blocks.h"
@@ -332,7 +334,7 @@ void ComputeJob::buildMesh()
                 if (Blocks::isPlant(type))
                 {
                     makePlant(m_vertices, x + pos.x * 16, y + pos.y * 16, z + pos.z * 16,
-                        type, m_chunk.getLight(x, y, z));
+                        type, m_data.lightMap[dx][dy][dz]);
                 }
                 else
                 {
