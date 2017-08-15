@@ -31,7 +31,7 @@ void Renderer::render(Camera &cam, Frustum &f)
 
     m_chunkTexture.bind(GL_TEXTURE0);
 
-    m_projection = glm::perspective(f.getFov(), f.getRatio(), f.getNear(), f.getFar());
+    m_projection = glm::perspective(glm::radians(f.getFov()), f.getRatio(), f.getNear(), f.getFar());
 
     for (const auto &it : m_chunks)
     {

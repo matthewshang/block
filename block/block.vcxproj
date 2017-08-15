@@ -29,6 +29,7 @@
     <ClCompile Include="..\src\inputmanager.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\perlin.cpp" />
+    <ClCompile Include="..\src\player.cpp" />
     <ClCompile Include="..\src\renderer.cpp" />
     <ClCompile Include="..\src\shader.cpp" />
     <ClCompile Include="..\src\terraingenerator.cpp" />
@@ -47,6 +48,7 @@
     <ClInclude Include="..\src\game.h" />
     <ClInclude Include="..\src\inputmanager.h" />
     <ClInclude Include="..\src\perlin.h" />
+    <ClInclude Include="..\src\player.h" />
     <ClInclude Include="..\src\renderer.h" />
     <ClInclude Include="..\src\shader.h" />
     <ClInclude Include="..\src\sharedvector.h" />
@@ -165,6 +167,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

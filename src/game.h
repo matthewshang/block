@@ -14,6 +14,7 @@
 #include "computejob.h"
 #include "frustum.h"
 #include "inputmanager.h"
+#include "player.h"
 #include "renderer.h"
 #include "sharedvector.h"
 #include "terraingenerator.h"
@@ -35,8 +36,6 @@ private:
     void loadNearest(const glm::ivec3 &center, int maxJobs);
     void updateNearest(const glm::ivec3 &center, int maxJobs);
     void updateChunks();
-    bool collide(glm::vec3 &pos);
-    void updatePlayer(float dt);
 
     void dirtyChunks(glm::ivec3 center);
     Chunk *chunkFromWorld(const glm::vec3 &pos);
@@ -59,11 +58,8 @@ private:
     GLFWwindow *m_window;
     Camera m_camera;
     Frustum m_frustum;
-    glm::vec3 m_pos;
-    glm::vec3 m_vel;
-    bool m_flying;
+    Player m_player;
     float m_cooldown;
-    float m_flyCooldown;
 
     double m_lastX;
     double m_lastY;
