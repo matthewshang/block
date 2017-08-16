@@ -1,5 +1,9 @@
 #include "player.h"
 
+#include <iostream>
+
+#include <glm/gtx/string_cast.hpp>
+
 #include "blocks.h"
 #include "chunk.h"
 #include "inputmanager.h"
@@ -7,7 +11,6 @@
 void Player::update(float dt, ChunkMap &chunks, InputManager &input)
 {
     m_flyTimer += dt;
-
 
     glm::vec3 vel;
     glm::vec3 front = -glm::cross(m_camera.getRight(), glm::vec3(0, 1, 0));
@@ -42,9 +45,9 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
         {
             vel += glm::vec3(0.0f, 1.0f, 0.0f);
         }
-        else if (m_vel.y == 0.0f && !switched)
+        else if (m_moveVel.y == 0.0f && !switched)
         {
-            m_vel.y += 8.0f;
+            m_moveVel.y += 8.0f;
         }
     }
     if (input.keyPressed(GLFW_KEY_LEFT_SHIFT))
@@ -55,30 +58,51 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
         }
     }
 
-    if (glm::length(vel) > 0)
-        vel = glm::normalize(vel);
-
     // based on github.com/fogleman/Craft
-    float speed = m_flying ? 15.0f : 5.0f;
+    float speed = m_flying ? 14.0f : 7.0f;
+    float friction = m_flying ? 0.95f : 0.85f;
     const int steps = 8;
     float ut = dt / static_cast<float>(steps);
-    vel *= ut * speed;
+    if (glm::length(vel) > 0)
+    {
+        vel = glm::normalize(vel);
+    }
+
+    m_moveVel += vel;
+    if (m_flying)
+    {
+        if (glm::length(m_moveVel) > speed)
+        {
+            m_moveVel = glm::normalize(m_moveVel) * speed;
+        }
+    }
+    else
+    {
+        glm::vec2 planeVel(m_moveVel.x, m_moveVel.z);
+        if (glm::length(planeVel) > speed)
+        {
+            planeVel = glm::normalize(planeVel) * speed;
+            m_moveVel.x = planeVel.x;
+            m_moveVel.z = planeVel.y;
+        }
+    }
+
+    m_moveVel *= glm::vec3(friction, m_flying ? friction : 1.0f, friction);
+
     for (int i = 0; i < steps; i++)
     {
-        if (m_flying)
+        if (!m_flying)
         {
-            m_vel.y = 0.0f;
-        }
-        else
-        {
-            m_vel.y -= ut * 20.0f;
-            m_vel.y = (std::max)(m_vel.y, -250.0f);
+            m_moveVel.y -= ut * 23.0f;
+            m_moveVel.y = (std::max)(m_moveVel.y, -250.0f);
         }
 
-        m_pos += vel + m_vel * ut;
+        m_pos += m_moveVel * ut;
 
         if (collide(m_pos, chunks))
-            m_vel.y = 0.0f;
+        {
+            m_moveVel.y = 0.0f;
+        }
     }
 
     m_camera.setPos(m_pos);

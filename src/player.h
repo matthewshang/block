@@ -23,6 +23,7 @@ private:
 
     glm::vec3 m_pos;
     glm::vec3 m_vel;
+    glm::vec3 m_moveVel;
 
     bool m_flying;
     float m_flyTimer;
