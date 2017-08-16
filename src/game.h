@@ -30,7 +30,7 @@ public:
 private:
     int getVoxel(const glm::ivec3 &i);
     int traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos);
-    void raycast(glm::vec3 origin, glm::vec3 dir, float range, int block);
+    bool raycast(glm::vec3 origin, glm::vec3 dir, float range, glm::ivec3 &hit, glm::ivec3 &norm);
     void processInput(float dt);
 
     void loadNearest(const glm::ivec3 &center, int maxJobs);

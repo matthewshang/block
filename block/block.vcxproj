@@ -25,6 +25,7 @@
     <ClCompile Include="..\src\computejob.cpp" />
     <ClCompile Include="..\src\frustum.cpp" />
     <ClCompile Include="..\src\game.cpp" />
+    <ClCompile Include="..\src\geometry.cpp" />
     <ClCompile Include="..\src\glad.c" />
     <ClCompile Include="..\src\inputmanager.cpp" />
     <ClCompile Include="..\src\main.cpp" />
@@ -46,6 +47,7 @@
     <ClInclude Include="..\src\computejob.h" />
     <ClInclude Include="..\src\frustum.h" />
     <ClInclude Include="..\src\game.h" />
+    <ClInclude Include="..\src\geometry.h" />
     <ClInclude Include="..\src\inputmanager.h" />
     <ClInclude Include="..\src\perlin.h" />
     <ClInclude Include="..\src\player.h" />
@@ -61,6 +63,8 @@
   <ItemGroup>
     <None Include="..\res\shaders\block_fragment.glsl" />
     <None Include="..\res\shaders\block_vertex.glsl" />
+    <None Include="..\res\shaders\select_fragment.glsl" />
+    <None Include="..\res\shaders\select_vertex.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2D5579B2-41DC-4995-8594-ED646344192F}</ProjectGuid>

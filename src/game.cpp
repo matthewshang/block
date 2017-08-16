@@ -186,33 +186,20 @@ int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm,
     return Blocks::Air;
 }
 
-void Game::raycast(glm::vec3 p, glm::vec3 dir, float range, int block)
+bool Game::raycast(glm::vec3 origin, glm::vec3 dir, float range, glm::ivec3 &hit, glm::ivec3 &norm)
 {
     float ds = glm::length(dir);
     if (ds == 0.0f)
-        return;
+        return false;
 
     dir /= ds;
-    glm::ivec3 norm, ipos;
-    int type = traceRay(p, dir, range, norm, ipos);
+    int type = traceRay(origin, dir, range, norm, hit);
     //std::cout << "raycast: " << (type != Blocks::Air) << std::endl;
     //if (type) std::cout << "raycast pos: " << glm::to_string(pos) << std::endl;
     //if (type) std::cout << "raycast ipos: " << glm::to_string(ipos) << std::endl;
     //if (type) std::cout << "raycast norm: " << glm::to_string(norm) << std::endl;
 
-    if (type != Blocks::Air)
-    {
-        glm::vec3 rpos = block == Blocks::Air ? ipos : ipos + norm;
-        glm::ivec3 coords = glm::floor(rpos / 16.0f);
-        Chunk *c = getChunk(m_chunks, coords);
-        if (c == nullptr)
-            return;
-
-        glm::vec3 integral(16.0f);
-        glm::ivec3 ipos2 = glm::mod(rpos, integral);
-        c->setBlock(ipos2.x, ipos2.y, ipos2.z, block);
-        dirtyChunks(coords);
-    }
+    return type != Blocks::Air;
 }
 
 void Game::processInput(float dt)
@@ -244,15 +231,40 @@ void Game::processInput(float dt)
 
     m_camera.processMouse(dx, dy);
 
+    glm::ivec3 hitPos, hitNorm;
+    bool hit = raycast(m_player.getPos(), m_camera.getFront(), 12, hitPos, hitNorm);
+
+    if (hit)
+    {
+        m_renderer.setSelected(hitPos);
+    }
+    else
+    {
+        m_renderer.unselect();
+    }
+
     if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
         glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
     {
         if (m_cooldown > 0.2f)
         {
             bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+            int block = left ? Blocks::Air : Blocks::Glowstone;
 
-            raycast(m_player.getPos(), m_camera.getFront(), 12, left ? Blocks::Air : Blocks::Glowstone);
-            m_cooldown = 0.0f;
+            if (hit)
+            {
+                glm::vec3 rpos = block == Blocks::Air ? hitPos : hitPos + hitNorm;
+                glm::ivec3 coords = glm::floor(rpos / 16.0f);
+                Chunk *c = getChunk(m_chunks, coords);
+                if (c == nullptr)
+                    return;
+
+                glm::vec3 integral(16.0f);
+                glm::ivec3 ipos2 = glm::mod(rpos, integral);
+                c->setBlock(ipos2.x, ipos2.y, ipos2.z, block);
+                dirtyChunks(coords);
+                m_cooldown = 0.0f;
+            }
         }
     }
 }

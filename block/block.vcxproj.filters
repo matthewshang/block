@@ -66,6 +66,9 @@
     <ClCompile Include="..\src\player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\geometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shader.h">
@@ -125,12 +128,21 @@
     <ClInclude Include="..\src\player.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\geometry.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\block_vertex.glsl">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="..\res\shaders\block_fragment.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\res\shaders\select_vertex.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\res\shaders\select_fragment.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

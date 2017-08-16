@@ -1,20 +1,33 @@
 #include "renderer.h"
 
-#include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "geometry.h"
+
 Renderer::Renderer(ChunkMap &chunks) :
     m_chunks(chunks), m_chunkShader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl"),
-    m_chunkTexture("../res/textures/terrain.png", GL_RGBA)
+    m_chunkTexture("../res/textures/terrain.png", GL_RGBA),
+    m_selectShader("../res/shaders/select_vertex.glsl", "../res/shaders/select_fragment.glsl")
 {
     m_chunkShader.bind();
     m_chunkShader.setInt("texture1", 0);
 
     m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(1920) / static_cast<float>(1080), 0.1f, 150.0f);
 
-    glEnable(GL_DEPTH_TEST);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glGenVertexArrays(1, &m_selectVao);
+    glBindVertexArray(m_selectVao);
+
+    glGenBuffers(1, &m_selectVbo);
+    std::vector<float> vertices;
+    Geometry::makeSelectCube(vertices, 1.05f);
+    glBindBuffer(GL_ARRAY_BUFFER, m_selectVbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
+
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT);
     //glFrontFace(GL_CW);
@@ -24,6 +37,8 @@ void Renderer::render(Camera &cam, Frustum &f)
 {
     glClearColor(m_skyColor.x, m_skyColor.y, m_skyColor.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_DEPTH_TEST);
 
     m_chunkShader.bind();
     m_chunkShader.setMat4("transform", m_projection * cam.getView());
@@ -47,4 +62,25 @@ void Renderer::render(Camera &cam, Frustum &f)
             glDrawArrays(GL_TRIANGLES, 0, chunk->getVertexCount());
         }
     }
+
+    if (m_showSelect)
+    {
+        glLineWidth(2.0f);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        //glDisable(GL_DEPTH_TEST);
+
+        glm::mat4 model;
+        model = glm::translate(model, m_selected);
+        m_selectShader.bind();
+        m_selectShader.setMat4("transform", m_projection * cam.getView() * model);
+
+        glBindVertexArray(m_selectVao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+}
+
+void Renderer::setSelected(const glm::vec3 &pos)
+{
+    m_selected = pos;
+    m_showSelect = true;
 }
