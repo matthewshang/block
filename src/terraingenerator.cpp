@@ -106,22 +106,50 @@ static bool canPutTree(int x, int y, int z)
 
 void TerrainGenerator::putTree(Chunk &c, int x, int y, int z)
 {
-    for (int ty = 0; ty < 4; ty++)
+    for (int i = y + 3; i < y + 5; i++)
     {
-        for (int tx = -3; tx < 3; tx++)
-        {
-            for (int tz = -3; tz < 3; tz++)
-            {
-                int d = tx * tx + (ty - 1) * (ty - 1) + tz * tz;
-                if (d < 9)
-                {
-                    c.setBlock(x + tx, y + ty + 3, z + tz, Blocks::Leaves);
-                }
-            }
-        }
+        c.setBlock(x - 1, i, z - 2, Blocks::Leaves);
+        c.setBlock(x + 0, i, z - 2, Blocks::Leaves);
+        c.setBlock(x + 1, i, z - 2, Blocks::Leaves);
+        if (i == y + 4) c.setBlock(x + 2, i, z - 2, Blocks::Leaves);
+
+        c.setBlock(x - 2, i, z - 1, Blocks::Leaves);
+        c.setBlock(x - 1, i, z - 1, Blocks::Leaves);
+        c.setBlock(x + 0, i, z - 1, Blocks::Leaves);
+        c.setBlock(x + 1, i, z - 1, Blocks::Leaves);
+        c.setBlock(x + 2, i, z - 1, Blocks::Leaves);
+
+        c.setBlock(x - 2, i, z + 0, Blocks::Leaves);
+        c.setBlock(x - 1, i, z + 0, Blocks::Leaves);
+        c.setBlock(x + 0, i, z + 0, Blocks::Leaves);
+        c.setBlock(x + 1, i, z + 0, Blocks::Leaves);
+        c.setBlock(x + 2, i, z + 0, Blocks::Leaves);
+
+        c.setBlock(x - 2, i, z + 1, Blocks::Leaves);
+        c.setBlock(x - 1, i, z + 1, Blocks::Leaves);
+        c.setBlock(x + 0, i, z + 1, Blocks::Leaves);
+        c.setBlock(x + 1, i, z + 1, Blocks::Leaves);
+        c.setBlock(x + 2, i, z + 1, Blocks::Leaves);
+
+        c.setBlock(x - 1, i, z + 2, Blocks::Leaves);
+        c.setBlock(x + 0, i, z + 2, Blocks::Leaves);
+        c.setBlock(x + 1, i, z + 2, Blocks::Leaves);
+        if (i == y + 4) c.setBlock(x + 2, i, z + 2, Blocks::Leaves);
     }
 
-    for (int ty = 0; ty < 5; ty++)
+    c.setBlock(x - 1, y + 5, z + 1, Blocks::Leaves);
+
+    for (int i = y + 5; i < y + 7; i++)
+    {
+        c.setBlock(x - 1, i, z + 0, Blocks::Leaves);
+        c.setBlock(x + 0, i, z - 1, Blocks::Leaves);
+        c.setBlock(x + 1, i, z + 0, Blocks::Leaves);
+        c.setBlock(x + 0, i, z + 1, Blocks::Leaves);
+    }
+
+    c.setBlock(x, y + 6, z, Blocks::Leaves);
+
+    for (int ty = 0; ty < 6; ty++)
     {
         c.setBlock(x, y + ty, z, Blocks::Log);
     }
