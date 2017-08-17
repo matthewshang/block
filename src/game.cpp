@@ -55,6 +55,7 @@ void Game::run()
             processInput(dt);
             m_player.update(dt, m_chunks, m_input);
 
+            m_frustum.setInternals(m_player.getFov(), 1920.0f / 1080.0f, 0.1f, 150.0f);
             m_frustum.setCam(m_camera.getPos(), m_camera.getPos() + m_camera.getFront(), glm::vec3(0, 1, 0));
 
             updateChunks();

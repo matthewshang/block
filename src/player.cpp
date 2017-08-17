@@ -22,11 +22,30 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
         m_flyTimer = 0.0f;
         switched = true;
     }
+    if (input.keyDoublePressed(GLFW_KEY_W, 0.25f))
+    {
+        m_sprinting = true;
+        m_sprintTimer = 0.0f;
+    }
 
     if (input.keyPressed(GLFW_KEY_W))
     {
         vel += front;
+        if (m_sprinting)
+        {
+            m_sprintTimer += dt;
+        }
     }
+    else
+    {
+        m_sprinting = false;
+        m_sprintTimer -= dt;
+    }
+
+    m_sprintTimer = (glm::min)((glm::max)(m_sprintTimer, 0.0f), 0.15f);
+    m_fov = 60.0f + m_sprintTimer * 50.0f;
+    std::cout << m_fov << std::endl;
+
     if (input.keyPressed(GLFW_KEY_S))
     {
         vel -= front;
@@ -59,13 +78,20 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
     }
 
     // based on github.com/fogleman/Craft
-    float speed = m_flying ? 14.0f : 7.0f;
+    float speed = m_flying ? 14.0f : 6.0f;
     float friction = m_flying ? 0.95f : 0.85f;
     const int steps = 8;
+    const float sprint = 1.35f;
     float ut = dt / static_cast<float>(steps);
     if (glm::length(vel) > 0)
     {
         vel = glm::normalize(vel);
+    }
+
+    if (m_sprinting)
+    {
+        speed *= sprint;
+        vel *= sprint;
     }
 
     m_moveVel += vel;
@@ -93,7 +119,7 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
     {
         if (!m_flying)
         {
-            m_moveVel.y -= ut * 23.0f;
+            m_moveVel.y -= ut * 25.0f;
             m_moveVel.y = (std::max)(m_moveVel.y, -250.0f);
         }
 
@@ -110,7 +136,6 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
 
 Chunk *getChunk(ChunkMap &chunks, const glm::ivec3 &coords);
 int getBlock(Chunk *chunks[7], Chunk *edges[4], int x, int y, int z);
-
 
 bool Player::collide(glm::vec3 &pos, ChunkMap &chunks)
 {
