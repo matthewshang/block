@@ -44,7 +44,6 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
 
     m_sprintTimer = (glm::min)((glm::max)(m_sprintTimer, 0.0f), 0.15f);
     m_fov = 60.0f + m_sprintTimer * 50.0f;
-    std::cout << m_fov << std::endl;
 
     if (input.keyPressed(GLFW_KEY_S))
     {

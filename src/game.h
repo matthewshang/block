@@ -40,8 +40,9 @@ private:
     void dirtyChunks(glm::ivec3 center);
     Chunk *chunkFromWorld(const glm::vec3 &pos);
 
-    const int m_loadDistance = 2;
+    const int m_loadDistance = 8;
     float m_eraseDistance;
+    float m_viewDistance;
 
     ChunkMap m_chunks;
     std::set<glm::ivec3, ChunkCompare> m_loadedChunks;
