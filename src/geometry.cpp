@@ -59,27 +59,26 @@ void Geometry::makeCube(std::vector<float> &vertices, float x, float y, float z,
 
 void Geometry::makeSelectCube(std::vector<float> &vertices, float size)
 {
-    static const glm::vec3 positions[6][4] = {
-        { glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3(0.5f,  0.5f,  0.5f), glm::vec3(0.5f, -0.5f,  0.5f) },
-        { glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.5f,  0.5f, -0.5f), glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3(-0.5f, -0.5f, -0.5f) },
-        { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3(-0.5f, -0.5f,  0.5f) },
-        { glm::vec3(0.5f, -0.5f,  0.5f), glm::vec3(0.5f,  0.5f,  0.5f), glm::vec3(0.5f,  0.5f, -0.5f), glm::vec3(0.5f, -0.5f, -0.5f) },
-        { glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3(0.5f,  0.5f, -0.5f), glm::vec3(0.5f,  0.5f,  0.5f) },
-        { glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3(0.5f, -0.5f,  0.5f), glm::vec3(0.5f, -0.5f, -0.5f) }
+    static const glm::vec3 positions[8] = {
+        glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(-0.5f, 0.5f, 0.5f), 
+        glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.5f, -0.5f, 0.5f),
+        glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-0.5f, 0.5f, -0.5f), 
+        glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.5f, -0.5f, -0.5f)
     };
 
-    static const int indices[6] = {
-        0, 1, 2, 0, 2, 3
+    static const int indices[12][2] = {
+        {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6},
+        {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}
     };
 
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 12; i++)
     {
-        for (int v = 0; v < 6; v++)
+        for (int j = 0; j < 2; j++)
         {
-            int j = indices[v];
-            vertices.push_back(positions[i][j].x * size);
-            vertices.push_back(positions[i][j].y * size);
-            vertices.push_back(positions[i][j].z * size);
+            int idx = indices[i][j];
+            vertices.push_back(positions[idx].x * size);
+            vertices.push_back(positions[idx].y * size);
+            vertices.push_back(positions[idx].z * size);
         }
     }
 }

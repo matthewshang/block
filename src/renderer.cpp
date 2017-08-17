@@ -65,7 +65,7 @@ void Renderer::render(Camera &cam, Frustum &f)
 
     if (m_showSelect)
     {
-        glLineWidth(2.0f);
+        glLineWidth(1.5f);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glDisable(GL_DEPTH_TEST);
 
@@ -75,7 +75,7 @@ void Renderer::render(Camera &cam, Frustum &f)
         m_selectShader.setMat4("transform", m_projection * cam.getView() * model);
 
         glBindVertexArray(m_selectVao);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawArrays(GL_LINES, 0, 24);
     }
 }
 
