@@ -8,3 +8,4 @@ todo.txt
 *.vspx
 *.psess
 build
+.DS_Store
