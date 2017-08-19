@@ -133,8 +133,8 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
     m_camera.setPos(m_pos);
 }
 
-Chunk *getChunk(ChunkMap &chunks, const glm::ivec3 &coords);
-int getBlock(Chunk *chunks[7], Chunk *edges[4], int x, int y, int z);
+static Chunk *getChunk(ChunkMap &chunks, const glm::ivec3 &coords);
+static int getBlock(Chunk *chunks[7], Chunk *edges[4], int x, int y, int z);
 
 bool Player::collide(glm::vec3 &pos, ChunkMap &chunks)
 {

@@ -16,7 +16,7 @@ const int Chunk::opposites[6] = {
 };
 
 Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(false), m_glDirty(true), m_vertices(),
-m_lightmap{}, m_empty(true)
+m_lightmap(), m_empty(true)
 {
     m_worldCenter = glm::vec3(pos.x * 16 + 8, pos.y * 16 + 8, pos.z * 16 + 8);
 

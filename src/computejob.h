@@ -30,7 +30,7 @@ private:
         uint8_t light;
     };
 
-    void getLights(Chunk &c, glm::ivec3 &delta, std::queue<LightNode> &queue);
+    void getLights(Chunk &c, const glm::ivec3 &delta, std::queue<LightNode> &queue);
     void calcLighting(ChunkMap &chunks);
     void smoothLighting(int x, int y, int z, float light[6][4]);
     void smoothLighting2(int x, int y, int z, float light[6][4]);

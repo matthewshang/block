@@ -45,7 +45,7 @@ void Frustum::setCam(const glm::vec3 &p, const glm::vec3 &l, const glm::vec3 &u)
     m_p[5].setPoints(m_ftr, m_ftl, m_fbl);
 }
 
-bool Frustum::boxInFrustum(glm::vec3 &a, glm::vec3 &w)
+bool Frustum::boxInFrustum(const glm::vec3 &a, const glm::vec3 &w)
 {
     for (int i = 0; i < 6; i++)
     {

@@ -15,7 +15,7 @@ TerrainGenerator::TerrainGenerator() :
     
 }
 
-bool canPutTree(int x, int y, int z);
+static bool canPutTree(int x, int y, int z);
 
 void TerrainGenerator::generate(Chunk &c)
 {
