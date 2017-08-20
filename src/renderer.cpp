@@ -7,7 +7,7 @@
 
 Renderer::Renderer(ChunkMap &chunks) :
     m_chunks(chunks), m_chunkShader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl"),
-    m_chunkTexture("../res/textures/terrain.png", GL_RGBA),
+    m_chunkTexture("../res/textures/terrain2.png", GL_RGBA),
     m_selectShader("../res/shaders/select_vertex.glsl", "../res/shaders/select_fragment.glsl")
 {
     m_chunkShader.bind();

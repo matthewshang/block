@@ -62,8 +62,8 @@ void Game::run()
             accumulator -= dt;
         }
 
-        //float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.7f;
-        float daylight = 0.25f;
+        //float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.8f + 0.1f;
+        float daylight = .9f;
         m_renderer.setSkyColor(skyColor * daylight);
         m_renderer.setDaylight(daylight);
         m_renderer.render(m_camera, m_frustum);

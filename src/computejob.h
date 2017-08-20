@@ -18,7 +18,27 @@ private:
     struct ChunkData
     {
         uint8_t lightMap[3 * CHUNK_SIZE][3 * CHUNK_SIZE][3 * CHUNK_SIZE];
-        bool opaqueMap[48][48][48];
+        uint8_t typeMap[48][48][48];
+
+        void setLight(int x, int y, int z, int val)
+        {
+            lightMap[x][y][z] = (lightMap[x][y][z] & 0xF0) | val;
+        }
+
+        int getLight(int x, int y, int z)
+        {
+            return (lightMap[x][y][z]) & 0xF;
+        }
+
+        void setSunlight(int x, int y, int z, int val)
+        {
+            lightMap[x][y][z] = (lightMap[x][y][z] & 0xF) | (val << 4);
+        }
+
+        int getSunlight(int x, int y, int z)
+        {
+            return (lightMap[x][y][z] >> 4) & 0xF;
+        }
     };
 
     struct LightNode
@@ -31,9 +51,10 @@ private:
     };
 
     void getLights(Chunk &c, const glm::ivec3 &delta, std::queue<LightNode> &queue);
-    void calcLighting(ChunkMap &chunks);
+    void calcLighting();
+    void calcSunlight();
     void smoothLighting(int x, int y, int z, float light[6][4]);
-    void smoothLighting2(int x, int y, int z, float light[6][4]);
+    void smoothLighting2(int x, int y, int z, float light[6][4], float sunlight[6][4]);
     void faceLighting(int x, int y, int z, float light[6][4]);
     void buildMesh();
 

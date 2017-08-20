@@ -7,7 +7,8 @@
 
 #include "blocks.h"
 
-void Geometry::makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6], int type, float light[6][4])
+void Geometry::makeCube(std::vector<float> &vertices, float x, float y, float z, bool faces[6], int type, 
+    float light[6][4], float sunlight[6][4])
 {
     static const glm::vec3 positions[6][4] = {
         { glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3(0.5f,  0.5f,  0.5f), glm::vec3(0.5f, -0.5f,  0.5f) },
@@ -50,9 +51,10 @@ void Geometry::makeCube(std::vector<float> &vertices, float x, float y, float z,
             vertices.push_back(positions[i][j].z + z);
             vertices.push_back(tu + texcoords[j].x * s);
             vertices.push_back(tv + texcoords[j].y * s);
-            float lightVal = (static_cast<float>(light[i][j]) + 1.0f) / 16.0f;
-            lightVal = (std::max)(lightVal, 0.1f);
-            vertices.push_back(lightVal);
+            //int l = std::max(static_cast<float>(light[i][j]), 4.0f);
+            //float lightVal = std::powf(0.8f, 15.0f - l);
+            vertices.push_back(light[i][j] / 16.0f);
+            vertices.push_back(sunlight[i][j] / 16.0f);
         }
     }
 }
@@ -83,7 +85,8 @@ void Geometry::makeSelectCube(std::vector<float> &vertices, float size)
     }
 }
 
-void Geometry::makePlant(std::vector<float> &vertices, float x, float y, float z, int type, int light)
+void Geometry::makePlant(std::vector<float> &vertices, float x, float y, float z, int type, 
+    int light, int sunlight)
 {
     static const glm::vec3 positions[2][4] = {
         { glm::vec3(0.5f,  0.5f,  0.0f), glm::vec3(0.5f, -0.5f,  0.0f), glm::vec3(-0.5f, -0.5f,  0.0f), glm::vec3(-0.5f,  0.5f,  0.0f) },
@@ -116,7 +119,11 @@ void Geometry::makePlant(std::vector<float> &vertices, float x, float y, float z
             vertices.push_back(pos.z + z);
             vertices.push_back(tu + texcoords[j].x * s);
             vertices.push_back(tv + texcoords[j].y * s);
-            vertices.push_back((static_cast<float>(light) + 1.0f) / 16.0f);
+            //int l = std::max(static_cast<float>(light), 4.0f);
+            //float lightVal = std::powf(0.8f, 15.0f - l);
+            float lightVal = (static_cast<float>(light) + 1.0f) / 16.0f;
+            vertices.push_back(lightVal);
+            vertices.push_back((static_cast<float>(sunlight) + 1.0f) / 16.0f);
         }
     }
 }
