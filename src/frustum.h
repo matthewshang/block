@@ -10,7 +10,7 @@ public:
 
     void setInternals(float angle, float ratio, float nearD, float farD);
     void setCam(const glm::vec3 &p, const glm::vec3 &l, const glm::vec3 &u);
-    bool boxInFrustum(glm::vec3 &a, glm::vec3 &w);
+    bool boxInFrustum(const glm::vec3 &a, const glm::vec3 &w);
 
     float getFov() const { return m_angle; };
     float getRatio() const { return m_ratio; };

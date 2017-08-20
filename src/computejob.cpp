@@ -41,7 +41,7 @@ void ComputeJob::transfer()
     m_chunk.m_empty = m_empty;
 }
 
-void ComputeJob::getLights(Chunk &c, glm::ivec3 &delta, std::queue<LightNode> &queue)
+void ComputeJob::getLights(Chunk &c, const glm::ivec3 &delta, std::queue<LightNode> &queue)
 {
     glm::ivec3 d = delta * 16;
     glm::ivec3 d2 = (delta + 1) * 16;
