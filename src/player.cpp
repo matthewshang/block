@@ -78,7 +78,7 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
 
     // based on github.com/fogleman/Craft
     float speed = m_flying ? 14.0f : 6.0f;
-    float friction = m_flying ? 0.95f : 0.85f;
+    float friction = m_flying ? 0.92f : 0.85f;
     const int steps = 8;
     const float sprint = 1.35f;
     float ut = dt / static_cast<float>(steps);

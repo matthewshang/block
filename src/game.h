@@ -65,4 +65,8 @@ private:
     double m_lastX;
     double m_lastY;
     bool m_firstMouse;
+
+    int m_width;
+    int m_height;
+    float m_ratio;
 };

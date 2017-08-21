@@ -20,11 +20,14 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
 }
 
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -28)),
-    m_lastX(960), m_lastY(540), m_firstMouse(true), m_chunkGenerator(), m_processed(),
-    m_renderer(m_chunks), m_player(glm::vec3(-88, 55, -28), m_camera)
+    m_firstMouse(true), m_chunkGenerator(), m_processed(), m_renderer(m_chunks), m_player(glm::vec3(-88, 55, -28), m_camera)
 {
+    glfwGetWindowSize(m_window, &m_width, &m_height);
+    m_ratio = static_cast<float>(m_width) / static_cast<float>(m_height);
+    m_lastX = m_width / 2;
+    m_lastY = m_height / 2;
     m_eraseDistance = sqrtf(3 * (pow(16 * m_loadDistance, 2))) + 32.0f;
-    m_viewDistance = m_eraseDistance - 32.0f;
+    m_viewDistance = m_eraseDistance - 16.0f;
     glfwSetWindowUserPointer(window, &m_input);
     glfwSetKeyCallback(window, key_callback);
 }
@@ -54,7 +57,7 @@ void Game::run()
             processInput(dt);
             m_player.update(dt, m_chunks, m_input);
 
-            m_frustum.setInternals(m_player.getFov(), 1920.0f / 1080.0f, 0.1f, m_viewDistance);
+            m_frustum.setInternals(m_player.getFov(), m_ratio, 0.1f, m_viewDistance);
             m_frustum.setCam(m_camera.getPos(), m_camera.getPos() + m_camera.getFront(), glm::vec3(0, 1, 0));
 
             updateChunks();

@@ -6,11 +6,9 @@
 
 #include "game.h"
 
-#define WIDTH 1920
-#define HEIGHT 1080
-
-void framebufferSizeCallback(GLFWwindow *window, int width, int height);
-void windowFocusCallback(GLFWwindow *window, int focused);
+static void framebufferSizeCallback(GLFWwindow *window, int width, int height);
+static void windowFocusCallback(GLFWwindow *window, int focused);
+static void getResolution(int &width, int &height);
 
 int main()
 {
@@ -23,7 +21,11 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Block", NULL, NULL);
+    int width = 800;
+    int height = 600;
+    getResolution(width, height);
+    std::cout << width << ", " << height << std::endl;
+    GLFWwindow *window = glfwCreateWindow(width, height, "Block", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create window" << std::endl;
@@ -48,12 +50,12 @@ int main()
     return 0;
 }
 
-void framebufferSizeCallback(GLFWwindow *window, int width, int height)
+static void framebufferSizeCallback(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
 
-void windowFocusCallback(GLFWwindow *window, int focused)
+static void windowFocusCallback(GLFWwindow *window, int focused)
 {
     if (focused)
     {
@@ -63,4 +65,12 @@ void windowFocusCallback(GLFWwindow *window, int focused)
     {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
+}
+
+static void getResolution(int &width, int &height)
+{
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+    width = mode->width;
+    height = mode->height;
 }
