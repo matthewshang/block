@@ -35,4 +35,9 @@ private:
     Shader m_selectShader;
     GLuint m_selectVbo;
     GLuint m_selectVao;
+
+    Texture m_crosshair;
+    Shader m_guiShader;
+    GLuint m_crossVbo;
+    GLuint m_crossVao;
 };

@@ -127,3 +127,27 @@ void Geometry::makePlant(std::vector<float> &vertices, float x, float y, float z
         }
     }
 }
+
+void Geometry::makeGuiQuad(std::vector<float> &vertices, float xs, float ys)
+{
+    static const glm::vec2 positions[4] = {
+        glm::vec2(0.5f,  0.5f), glm::vec2(0.5f, -0.5f), glm::vec2(-0.5f, -0.5f), glm::vec2(-0.5f,  0.5f)
+    };
+
+    static const glm::vec2 texcoords[4] = {
+        glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f)
+    };
+
+    static const int indices[6] = {
+        0, 1, 2, 0, 2, 3
+    };
+
+    for (int v = 0; v < 6; v++)
+    {
+        int j = indices[v];
+        vertices.push_back(positions[j].x * xs);
+        vertices.push_back(positions[j].y * ys);
+        vertices.push_back(texcoords[j].x);
+        vertices.push_back(texcoords[j].y);
+    }
+}

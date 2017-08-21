@@ -52,19 +52,6 @@ void ComputeJob::getLights(Chunk &c, const glm::ivec3 &delta, std::queue<LightNo
             for (int z = 0; z < CHUNK_SIZE; z++)
             {
                 int type = c.getBlock(x, y, z);
-                //if (Blocks::isLight(type))
-                //{
-                //    queue.emplace(d.x + x, d.y + y, d.z + z, 15);
-                //    m_data.typeMap[d2.x + x][d2.y + y][d2.z + z] = 1;
-                //}
-                //else if (Blocks::isSolid(type))
-                //{
-                //    m_data.typeMap[d2.x + x][d2.y + y][d2.z + z] = 2;
-                //}
-                //else if (Blocks::isPlant(type) || type == Blocks::Leaves)
-                //{
-                //    m_data.typeMap[d2.x + x][d2.y + y][d2.z + z] = 3;
-                //}
                 m_data.typeMap[d2.x + x][d2.y + y][d2.z + z] = 0;
 
                 if (Blocks::isLight(type))

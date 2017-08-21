@@ -65,8 +65,9 @@ void Game::run()
             accumulator -= dt;
         }
 
-        //float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.8f + 0.1f;
-        float daylight = .9f;
+        // float daylight = (1.0f + sinf(glfwGetTime() * 0.5f)) * 0.5f * 0.8f + 0.1f;
+        // float daylight = 0.2f;
+        float daylight = (1.0f + sinf(glfwGetTime() * 0.1f)) * 0.5f * 0.7f + 0.2f;
         m_renderer.setSkyColor(skyColor * daylight);
         m_renderer.setDaylight(daylight);
         m_renderer.render(m_camera, m_frustum);
@@ -114,77 +115,105 @@ int Game::getVoxel(const glm::ivec3 &i)
     return c->getBlock(ipos.x, ipos.y, ipos.z);
 }
 
+// int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos)
+// {
+//     // github.com/andyhall/fast-voxel-raycast/blob/master/index.js
+//     float inf = std::numeric_limits<float>::infinity();
+//     float t = 0.0f;
+//     glm::ivec3 i = glm::floor(p);
+//     glm::ivec3 step(dir.x > 0 ? 1 : -1, 
+//                     dir.y > 0 ? 1 : -1, 
+//                     dir.z > 0 ? 1 : -1);
+//     glm::vec3 delta((dir.x == 0.0f) ? inf : std::fabsf(1.0f / dir.x),
+//                     (dir.y == 0.0f) ? inf : std::fabsf(1.0f / dir.y),
+//                     (dir.z == 0.0f) ? inf : std::fabsf(1.0f / dir.z));
+//     glm::vec3 dist((step.x > 0) ? (i.x + 1.0f - p.x) : (p.x - i.x),
+//                    (step.y > 0) ? (i.y + 1.0f - p.y) : (p.y - i.y),
+//                    (step.z > 0) ? (i.z + 1.0f - p.z) : (p.z - i.z));
+//     glm::vec3 max((delta.x < inf) ? delta.x * dist.x : inf,
+//                   (delta.y < inf) ? delta.y * dist.y : inf,
+//                   (delta.z < inf) ? delta.z * dist.z : inf);
+//     int idx = -1;
+
+//     while (t <= range)
+//     {
+//         int b = getVoxel(i);
+//         if (b != Blocks::Air)
+//         {
+//             hitIpos = i;
+//             hitNorm = glm::ivec3(0);
+//             if (idx == 0) hitNorm.x = -step.x;
+//             if (idx == 1) hitNorm.y = -step.y;
+//             if (idx == 2) hitNorm.z = -step.z;
+//             return b;
+//         }
+
+//         if (max.x < max.y)
+//         {
+//             if (max.x < max.z)
+//             {
+//                 i.x += step.x;
+//                 t = max.x;
+//                 max.x += delta.x;
+//                 idx = 0;
+//             }
+//             else
+//             {
+//                 i.z += step.z;
+//                 t = max.z;
+//                 max.z += delta.z;
+//                 idx = 2;
+//             }
+//         }
+//         else
+//         {
+//             if (max.y < max.z)
+//             {
+//                 i.y += step.y;
+//                 t = max.y;
+//                 max.y += delta.y;
+//                 idx = 1;
+//             }
+//             else
+//             {
+//                 i.z += step.z;
+//                 t = max.z;
+//                 max.z += delta.z;
+//                 idx = 2;
+//             }
+//         }
+//     }
+
+//     hitNorm = glm::ivec3(0);
+//     hitIpos = i;
+
+//     return Blocks::Air;
+// }
+
 int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos)
 {
-    // github.com/andyhall/fast-voxel-raycast/blob/master/index.js
-    float inf = std::numeric_limits<float>::infinity();
-    float t = 0.0f;
-    glm::ivec3 i = glm::floor(p);
-    glm::ivec3 step(dir.x > 0 ? 1 : -1, 
-                    dir.y > 0 ? 1 : -1, 
-                    dir.z > 0 ? 1 : -1);
-    glm::vec3 delta((dir.x == 0.0f) ? inf : std::fabsf(1.0f / dir.x),
-                    (dir.y == 0.0f) ? inf : std::fabsf(1.0f / dir.y),
-                    (dir.z == 0.0f) ? inf : std::fabsf(1.0f / dir.z));
-    glm::vec3 dist((step.x > 0) ? (i.x + 1.0f - p.x) : (p.x - i.x),
-                   (step.y > 0) ? (i.y + 1.0f - p.y) : (p.y - i.y),
-                   (step.z > 0) ? (i.z + 1.0f - p.z) : (p.z - i.z));
-    glm::vec3 max((delta.x < inf) ? delta.x * dist.x : inf,
-                  (delta.y < inf) ? delta.y * dist.y : inf,
-                  (delta.z < inf) ? delta.z * dist.z : inf);
-    int idx = -1;
-
-    while (t <= range)
+    const float stepSize = 0.1f;
+    int steps = static_cast<int>(range / stepSize);
+    int lastEmpty = -1;
+    glm::ivec3 lastHit;
+    for (int i = 0; i < steps; i++)
     {
-        int b = getVoxel(i);
-        if (b != Blocks::Air)
+        float len = static_cast<float>(i) / (static_cast<float>(steps) * stepSize);
+        glm::vec3 v = p + dir * len;
+        glm::ivec3 iv = glm::round(v);
+        int b = getVoxel(iv);
+        if (b == Blocks::Air)
         {
-            hitIpos = i;
-            hitNorm = glm::ivec3(0);
-            if (idx == 0) hitNorm.x = -step.x;
-            if (idx == 1) hitNorm.y = -step.y;
-            if (idx == 2) hitNorm.z = -step.z;
+            lastEmpty = i;
+            lastHit = iv;
+        }
+        else if (lastEmpty != -1)
+        {
+            hitIpos = iv;
+            hitNorm = lastHit - iv;
             return b;
         }
-
-        if (max.x < max.y)
-        {
-            if (max.x < max.z)
-            {
-                i.x += step.x;
-                t = max.x;
-                max.x += delta.x;
-                idx = 0;
-            }
-            else
-            {
-                i.z += step.z;
-                t = max.z;
-                max.z += delta.z;
-                idx = 2;
-            }
-        }
-        else
-        {
-            if (max.y < max.z)
-            {
-                i.y += step.y;
-                t = max.y;
-                max.y += delta.y;
-                idx = 1;
-            }
-            else
-            {
-                i.z += step.z;
-                t = max.z;
-                max.z += delta.z;
-                idx = 2;
-            }
-        }
     }
-
-    hitNorm = glm::ivec3(0);
-    hitIpos = i;
 
     return Blocks::Air;
 }
