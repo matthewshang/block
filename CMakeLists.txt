@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 project (block)
 
+message (STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 include_directories(${CMAKE_SOURCE_DIR}/include)
 link_directories(${CMAKE_SOURCE_DIR}/libs)
 
