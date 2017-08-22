@@ -16,7 +16,7 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
     glm::vec3 front = -glm::cross(m_camera.getRight(), glm::vec3(0, 1, 0));
     bool switched = false;
 
-    if (input.keyDoublePressed(GLFW_KEY_SPACE, 0.25f) && m_flyTimer > 0.4f)
+    if (input.keyDoublePressed(GLFW_KEY_SPACE, 0.2f) && m_flyTimer > 0.4f)
     {
         m_flying = !m_flying;
         m_flyTimer = 0.0f;

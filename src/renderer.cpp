@@ -53,6 +53,12 @@ Renderer::Renderer(ChunkMap &chunks) :
     //glFrontFace(GL_CW);
 }
 
+void Renderer::resize(int width, int height)
+{
+    m_width = width;
+    m_height = height;
+}
+
 void Renderer::render(Camera &cam, Frustum &f)
 {
     glClearColor(m_skyColor.x, m_skyColor.y, m_skyColor.z, 1.0f);
@@ -105,9 +111,9 @@ void Renderer::render(Camera &cam, Frustum &f)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     m_guiShader.bind();
-    glm::mat4 projection = glm::ortho(0.0f, 1440.0f, 0.0f, 800.0f, -1.0f, 1.0f);
+    glm::mat4 projection = glm::ortho(0.0f, (float) m_width, 0.0f, (float) m_height, -1.0f, 1.0f);
     glm::mat4 model;
-    model = glm::translate(model, glm::vec3(720, 400, 0));
+    model = glm::translate(model, glm::vec3(m_width / 2, m_height / 2, 0));
     m_guiShader.setMat4("transform", projection * model);
     m_crosshair.bind(GL_TEXTURE0);
     glBindVertexArray(m_crossVao);

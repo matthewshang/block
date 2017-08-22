@@ -23,6 +23,7 @@ Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -
     m_firstMouse(true), m_chunkGenerator(), m_processed(), m_renderer(m_chunks), m_player(glm::vec3(-88, 55, -28), m_camera)
 {
     glfwGetWindowSize(m_window, &m_width, &m_height);
+    m_renderer.resize(m_width, m_height);
     m_ratio = static_cast<float>(m_width) / static_cast<float>(m_height);
     m_lastX = m_width / 2;
     m_lastY = m_height / 2;
@@ -80,7 +81,8 @@ void Game::run()
             glm::ivec3 ipos = glm::floor(m_camera.getPos() / 16.0f);
             char title[256];
             title[255] = '\0';
-            snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [pos: %f, %f, %f] [chunk: %d %d %d]", nFrames, m_chunks.size(), m_pool.getJobsAmount(),
+            snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [pos: %f, %f, %f] [chunk: %d %d %d]", 
+                nFrames, m_chunks.size(), m_pool.getJobsAmount(),
                 m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z, ipos.x, ipos.y, ipos.z);
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;

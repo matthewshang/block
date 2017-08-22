@@ -14,6 +14,8 @@ class Renderer
 public:
     Renderer(ChunkMap &chunks);
 
+    void resize(int width, int height);
+
     void render(Camera &cam, Frustum &f);
     void setSkyColor(glm::vec3 c) { m_skyColor = c; };
     void setDaylight(float daylight) { m_daylight = daylight; };
@@ -22,6 +24,9 @@ public:
 
 private:
     ChunkMap &m_chunks;
+
+    int m_width;
+    int m_height;
 
     glm::mat4 m_projection;
 
