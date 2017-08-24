@@ -13,24 +13,19 @@
 #include "blocks.h"
 #include "chunk.h"
 
-static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
-{
-    InputManager *input = reinterpret_cast<InputManager *>(glfwGetWindowUserPointer(window));
-    input->handleKey(key, action);
-}
-
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -28)),
-    m_firstMouse(true), m_chunkGenerator(), m_processed(), m_renderer(m_chunks), m_player(glm::vec3(-88, 55, -28), m_camera)
+    m_chunkGenerator(), m_processed(), m_renderer(m_chunks), m_player(glm::vec3(-88, 55, -28), m_camera),
+    m_input(window)
 {
     glfwGetWindowSize(m_window, &m_width, &m_height);
     m_renderer.resize(m_width, m_height);
     m_ratio = static_cast<float>(m_width) / static_cast<float>(m_height);
-    m_lastX = m_width / 2;
-    m_lastY = m_height / 2;
+
     m_eraseDistance = sqrtf(3 * (pow(16 * m_loadDistance, 2))) + 32.0f;
-    m_viewDistance = m_eraseDistance - 16.0f;
+    m_viewDistance = m_eraseDistance;
     glfwSetWindowUserPointer(window, &m_input);
-    glfwSetKeyCallback(window, key_callback);
+    glfwSetKeyCallback(window, InputManager::keyCallback);
+    glfwSetMouseButtonCallback(window, InputManager::mouseButtonCallback);
 }
 
 void Game::run()
@@ -153,11 +148,6 @@ bool Game::raycast(glm::vec3 origin, glm::vec3 dir, float range, glm::ivec3 &hit
 
     dir /= ds;
     int type = traceRay(origin, dir, range, norm, hit);
-    //std::cout << "raycast: " << (type != Blocks::Air) << std::endl;
-    //if (type) std::cout << "raycast pos: " << glm::to_string(pos) << std::endl;
-    //if (type) std::cout << "raycast ipos: " << glm::to_string(ipos) << std::endl;
-    //if (type) std::cout << "raycast norm: " << glm::to_string(norm) << std::endl;
-
     return type != Blocks::Air;
 }
 
@@ -175,20 +165,8 @@ void Game::processInput(float dt)
         m_player.setPos(glm::vec3(-88, 54, -28));
     }
 
-    double xpos, ypos;
-    glfwGetCursorPos(m_window, &xpos, &ypos);
-    if (m_firstMouse)
-    {
-        m_lastX = xpos;
-        m_lastY = ypos;
-        m_firstMouse = false;
-    }
-    float dx = static_cast<float>(xpos - m_lastX);
-    float dy = static_cast<float>(m_lastY - ypos);
-    m_lastX = xpos;
-    m_lastY = ypos;
-
-    m_camera.processMouse(dx, dy);
+    const glm::vec2 &deltaMouse = m_input.getCursorDelta();
+    m_camera.processMouse(deltaMouse.x, deltaMouse.y);
 
     glm::ivec3 hitPos, hitNorm;
     bool hit = raycast(m_player.getPos(), m_camera.getFront(), 12, hitPos, hitNorm);
@@ -202,12 +180,11 @@ void Game::processInput(float dt)
         m_renderer.unselect();
     }
 
-    if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ||
-        glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    if (m_input.mousePressed(GLFW_MOUSE_BUTTON_LEFT) || m_input.mousePressed(GLFW_MOUSE_BUTTON_RIGHT))
     {
         if (m_cooldown > 0.2f)
         {
-            bool left = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+            bool left = m_input.mousePressed(GLFW_MOUSE_BUTTON_LEFT);
             int block = left ? Blocks::Air : Blocks::Glowstone;
 
             if (hit)
