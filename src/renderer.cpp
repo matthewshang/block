@@ -20,33 +20,13 @@ Renderer::Renderer(ChunkMap &chunks) :
 
     m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(1920) / static_cast<float>(1080), 0.1f, 150.0f);
 
-    glGenVertexArrays(1, &m_selectVao);
-    glBindVertexArray(m_selectVao);
-
-    glGenBuffers(1, &m_selectVbo);
     std::vector<float> vertices;
     Geometry::makeSelectCube(vertices, 1.05f);
-    glBindBuffer(GL_ARRAY_BUFFER, m_selectVbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    m_selectMesh = std::make_unique<Mesh>(vertices, 3, std::vector<int>{3}, false);
 
-    glBindVertexArray(0);
-
-    glGenVertexArrays(1, &m_crossVao);
-    glBindVertexArray(m_crossVao);
-
-    glGenBuffers(1, &m_crossVbo);
     vertices.clear();
     Geometry::makeGuiQuad(vertices, 20.0f, 20.0f);
-    glBindBuffer(GL_ARRAY_BUFFER, m_crossVbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0);
+    m_crossMesh = std::make_unique<Mesh>(vertices, 4, std::vector<int>{2, 2}, true);
 
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT);
@@ -85,8 +65,7 @@ void Renderer::render(Camera &cam, Frustum &f)
                 continue;
 
             chunk->bufferData();
-            chunk->bind();
-            glDrawArrays(GL_TRIANGLES, 0, chunk->getVertexCount());
+            chunk->getMesh().draw();
         }
     }
 
@@ -101,8 +80,7 @@ void Renderer::render(Camera &cam, Frustum &f)
         m_selectShader.bind();
         m_selectShader.setMat4("transform", m_projection * cam.getView() * model);
 
-        glBindVertexArray(m_selectVao);
-        glDrawArrays(GL_LINES, 0, 24);
+        m_selectMesh->draw();
     }
 
     glDisable(GL_DEPTH_TEST);
@@ -116,8 +94,7 @@ void Renderer::render(Camera &cam, Frustum &f)
     model = glm::translate(model, glm::vec3(m_width / 2, m_height / 2, 0));
     m_guiShader.setMat4("transform", projection * model);
     m_crosshair.bind(GL_TEXTURE0);
-    glBindVertexArray(m_crossVao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    m_crossMesh->draw();
 }
 
 void Renderer::setSelected(const glm::vec3 &pos)

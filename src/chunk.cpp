@@ -16,43 +16,11 @@ const int Chunk::opposites[6] = {
 };
 
 Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(false), m_glDirty(true), m_vertices(),
-m_lightmap(), m_empty(true)
+m_lightmap{}, m_empty(true), m_blocks{}
 {
     m_worldCenter = glm::vec3(pos.x * 16 + 8, pos.y * 16 + 8, pos.z * 16 + 8);
 
-    glGenVertexArrays(1, &m_vao);
-    glBindVertexArray(m_vao);
-
-    glGenBuffers(1, &m_vbo);
-    initBlocks();
-    bufferData();
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(5 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(3);
-
-    glBindVertexArray(0);
-}
-
-Chunk::~Chunk()
-{
-    glDeleteVertexArrays(1, &m_vao);
-    glDeleteBuffers(1, &m_vbo);
-}
-
-void Chunk::bind()
-{
-    glBindVertexArray(m_vao);
-}
-
-int Chunk::getVertexCount()
-{
-    return m_vertexCount;
+    m_mesh = std::make_unique<Mesh>(m_vertices, 7, std::vector<int>{3, 2, 1, 1}, true, false);
 }
 
 bool Chunk::isEmpty()
@@ -95,8 +63,7 @@ void Chunk::bufferData()
 {
     if (m_glDirty)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-        glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
+        m_mesh->updateData(m_vertices);
         m_glDirty = false;
     }
 }

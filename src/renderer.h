@@ -1,11 +1,14 @@
 #pragma once
 
+#include <memory>
+
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include "camera.h"
 #include "chunk.h"
 #include "frustum.h"
+#include "mesh.h"
 #include "shader.h"
 #include "texture.h"
 
@@ -38,11 +41,9 @@ private:
     bool m_showSelect;
     glm::vec3 m_selected;
     Shader m_selectShader;
-    GLuint m_selectVbo;
-    GLuint m_selectVao;
+    std::unique_ptr<Mesh> m_selectMesh;
 
     Texture m_crosshair;
     Shader m_guiShader;
-    GLuint m_crossVbo;
-    GLuint m_crossVao;
+    std::unique_ptr<Mesh> m_crossMesh;
 };

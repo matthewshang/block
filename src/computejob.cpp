@@ -34,7 +34,6 @@ void ComputeJob::transfer()
         }
     }
 
-    m_chunk.m_vertexCount = m_vertices.size() / 6;
     m_chunk.m_vertices = std::move(m_vertices);
     m_chunk.m_dirty = false;
     m_chunk.m_glDirty = true;

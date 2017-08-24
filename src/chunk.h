@@ -1,14 +1,13 @@
 #pragma once
 
 #include <cstdint>
-#include <map>
-#include <queue>
+#include <memory>
 #include <vector>
 
 #include <glm/glm.hpp>
-#include <glad/glad.h>
 
 #include "common.h"
+#include "mesh.h"
 
 const int CHUNK_SIZE = 16;
 
@@ -20,16 +19,13 @@ public:
     static const int opposites[6];
 
     Chunk(glm::ivec3 pos);
-    ~Chunk();
-
-    void bufferData();
 
     void compute(ChunkMap &chunks);
+    void bufferData();
 
-    void bind();
+    Mesh &getMesh() const { return *m_mesh; };
     void setDirty(bool dirty) { m_dirty = dirty; };
     bool isDirty() { return m_dirty; };
-    int getVertexCount();
     bool isEmpty();
     void setBlock(int x, int y, int z, uint8_t type);
     uint8_t getBlock(int x, int y, int z);
@@ -44,9 +40,7 @@ public:
 private:
     void initBlocks();
 
-    GLuint m_vao;
-    GLuint m_vbo;
-    int m_vertexCount;
+    std::unique_ptr<Mesh> m_mesh;
     bool m_empty;
     bool m_dirty;
     bool m_glDirty;
