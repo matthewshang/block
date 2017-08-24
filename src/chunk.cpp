@@ -20,7 +20,7 @@ m_lightmap{}, m_empty(true), m_blocks{}
 {
     m_worldCenter = glm::vec3(pos.x * 16 + 8, pos.y * 16 + 8, pos.z * 16 + 8);
 
-    m_mesh = std::make_unique<Mesh>(m_vertices, 7, std::vector<int>{3, 2, 1, 1}, true, false);
+    m_mesh = std::make_unique<Mesh>(m_vertices, std::vector<int>{3, 2, 1, 1}, true, false);
 }
 
 bool Chunk::isEmpty()

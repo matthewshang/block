@@ -8,7 +8,7 @@ class Mesh
 {
 public:
     Mesh();
-    Mesh(const std::vector<float> &data, int vertexSize, const std::vector<int> &vertexAttribs, 
+    Mesh(const std::vector<float> &data, const std::vector<int> &vertexAttribs, 
          bool tris, bool staticDraw = true);
     ~Mesh();
 

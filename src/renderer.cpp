@@ -22,11 +22,11 @@ Renderer::Renderer(ChunkMap &chunks) :
 
     std::vector<float> vertices;
     Geometry::makeSelectCube(vertices, 1.05f);
-    m_selectMesh = std::make_unique<Mesh>(vertices, 3, std::vector<int>{3}, false);
+    m_selectMesh = std::make_unique<Mesh>(vertices, std::vector<int>{3}, false);
 
     vertices.clear();
     Geometry::makeGuiQuad(vertices, 20.0f, 20.0f);
-    m_crossMesh = std::make_unique<Mesh>(vertices, 4, std::vector<int>{2, 2}, true);
+    m_crossMesh = std::make_unique<Mesh>(vertices, std::vector<int>{2, 2}, true);
 
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT);
