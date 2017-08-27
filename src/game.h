@@ -13,6 +13,7 @@
 #include "common.h"
 #include "computejob.h"
 #include "frustum.h"
+#include "lighting.h"
 #include "inputmanager.h"
 #include "player.h"
 #include "renderer.h"
@@ -52,7 +53,7 @@ private:
 
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;
-
+    Lighting m_lighting;
     Renderer m_renderer;
     InputManager m_input;
 

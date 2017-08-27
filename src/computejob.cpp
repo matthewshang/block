@@ -6,6 +6,7 @@
 
 #include "blocks.h"
 #include "geometry.h"
+#include "timer.h"
 
 ComputeJob::ComputeJob(Chunk &chunk, ChunkMap &map) :
     m_chunk(chunk), m_chunkmap(map)
@@ -17,22 +18,22 @@ ComputeJob::ComputeJob(Chunk &chunk, ChunkMap &map) :
 void ComputeJob::execute()
 {
     calcLighting();
-    calcSunlight();
+    //calcSunlight();
     buildMesh();
 }
 
 void ComputeJob::transfer()
 {
-    for (int x = 0; x < CHUNK_SIZE; x++)
-    {
-        for (int y = 0; y < CHUNK_SIZE; y++)
-        {
-            for (int z = 0; z < CHUNK_SIZE; z++)
-            {
-                m_chunk.setLight(x, y, z, m_data.getLight(x + CHUNK_SIZE, y + CHUNK_SIZE, z + CHUNK_SIZE));
-            }
-        }
-    }
+    //for (int x = 0; x < CHUNK_SIZE; x++)
+    //{
+    //    for (int y = 0; y < CHUNK_SIZE; y++)
+    //    {
+    //        for (int z = 0; z < CHUNK_SIZE; z++)
+    //        {
+    //            m_chunk.setLight(x, y, z, m_data.getLight(x + CHUNK_SIZE, y + CHUNK_SIZE, z + CHUNK_SIZE));
+    //        }
+    //    }
+    //}
 
     m_chunk.m_vertices = std::move(m_vertices);
     m_chunk.m_dirty = false;
@@ -50,6 +51,8 @@ void ComputeJob::getLights(Chunk &c, const glm::ivec3 &delta, std::queue<LightNo
         {
             for (int z = 0; z < CHUNK_SIZE; z++)
             {
+                m_data.setLight(d2.x + x, d2.y + y, d2.z + z, c.getLight(x, y, z));
+                m_data.setSunlight(d2.x + x, d2.y + y, d2.z + z, c.getSunlight(x, y, z));
                 int type = c.getBlock(x, y, z);
                 m_data.typeMap[d2.x + x][d2.y + y][d2.z + z] = 0;
 
@@ -94,45 +97,45 @@ void ComputeJob::calcLighting()
         }
     }
 
-    const int MIN = -CHUNK_SIZE;
-    const int MAX = 2 * CHUNK_SIZE - 1;
+    //const int MIN = -CHUNK_SIZE;
+    //const int MAX = 2 * CHUNK_SIZE - 1;
 
-    while (!lightQueue.empty())
-    {
-        LightNode &node = lightQueue.front();
-        int x = node.x,
-            y = node.y,
-            z = node.z,
-            light = node.light;
-        lightQueue.pop();
+    //while (!lightQueue.empty())
+    //{
+    //    LightNode &node = lightQueue.front();
+    //    int x = node.x,
+    //        y = node.y,
+    //        z = node.z,
+    //        light = node.light;
+    //    lightQueue.pop();
 
-        if (light < 1)
-            continue;
+    //    if (light < 1)
+    //        continue;
 
-        if (x < MIN || x > MAX || y < MIN || y > MAX || z < MIN || z > MAX)
-            continue;
+    //    if (x < MIN || x > MAX || y < MIN || y > MAX || z < MIN || z > MAX)
+    //        continue;
 
-        int val = m_data.getLight(x + CHUNK_SIZE, y + CHUNK_SIZE, z + CHUNK_SIZE);
-        if (val >= light)
-            continue;
+    //    int val = m_data.getLight(x + CHUNK_SIZE, y + CHUNK_SIZE, z + CHUNK_SIZE);
+    //    if (val >= light)
+    //        continue;
 
-        uint8_t type = m_data.typeMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE];
-        if (type == 1)
-            continue;
+    //    uint8_t type = m_data.typeMap[x + CHUNK_SIZE][y + CHUNK_SIZE][z + CHUNK_SIZE];
+    //    if (type == 1)
+    //        continue;
 
-        m_data.setLight(x + CHUNK_SIZE, y + CHUNK_SIZE, z + CHUNK_SIZE, light);
+    //    m_data.setLight(x + CHUNK_SIZE, y + CHUNK_SIZE, z + CHUNK_SIZE, light);
 
-        if (type == 2 && light > 1)
-            light -= 2;
-        else
-            light -= 1;
-        lightQueue.emplace(x - 1, y, z, light);
-        lightQueue.emplace(x + 1, y, z, light);
-        lightQueue.emplace(x, y - 1, z, light);
-        lightQueue.emplace(x, y + 1, z, light);
-        lightQueue.emplace(x, y, z - 1, light);
-        lightQueue.emplace(x, y, z + 1, light);
-    }
+    //    if (type == 2 && light > 1)
+    //        light -= 2;
+    //    else
+    //        light -= 1;
+    //    lightQueue.emplace(x - 1, y, z, light);
+    //    lightQueue.emplace(x + 1, y, z, light);
+    //    lightQueue.emplace(x, y - 1, z, light);
+    //    lightQueue.emplace(x, y + 1, z, light);
+    //    lightQueue.emplace(x, y, z - 1, light);
+    //    lightQueue.emplace(x, y, z + 1, light);
+    //}
 }
 
 void ComputeJob::calcSunlight()

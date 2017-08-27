@@ -62,3 +62,30 @@ bool Blocks::isSolid(int type)
 
     return true;
 }
+
+int Blocks::luminance(int type)
+{
+    switch (type)
+    {
+    case Glowstone:
+        return 15;
+    default:
+        return 0;
+    }
+}
+
+int Blocks::opacity(int type)
+{
+    switch (type)
+    {
+    case Air:
+    case RedFlower:
+    case YellowFlower:
+    case GrassPlant:
+    case Leaves:
+    case Glowstone:
+        return 1;
+    default:
+        return 255;
+    }
+}

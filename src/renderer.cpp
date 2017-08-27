@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "geometry.h"
+#include "timer.h"
 
 Renderer::Renderer(ChunkMap &chunks) :
     m_chunks(chunks), m_chunkShader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl"),

@@ -1,0 +1,121 @@
+#include "lighting.h"
+
+#include <algorithm>
+
+#include "blocks.h"
+#include "chunk.h"
+
+void Lighting::pushUpdate(bool isBlock, const glm::ivec3 &min, const glm::ivec3 &max)
+{
+    m_ops.push_back(LightOp(isBlock, min, max));
+}
+
+void Lighting::lightNext()
+{
+    static const glm::ivec3 neighbors[6] = {
+        glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1), glm::ivec3(1, 0, 0),
+        glm::ivec3(-1, 0, 0), glm::ivec3(0, 1, 0), glm::ivec3(0, -1, 0)
+    };
+
+    if (m_ops.empty())
+        return;
+
+    LightOp op = m_ops.front();
+    m_ops.pop_front();
+
+    for (int x = op.min.x; x < op.max.x; x++)
+    for (int y = op.min.y; y < op.max.y; y++)
+    for (int z = op.min.z; z < op.max.z; z++)
+    {
+        glm::ivec3 pos(x, y, z);
+        glm::ivec3 coords = glm::floor(static_cast<glm::vec3>(pos) / 16.0f);
+        auto c = m_chunks.find(coords);
+        if (c == m_chunks.end())
+            continue;
+
+        Chunk &chunk = *c->second;
+
+        glm::vec3 n = pos;
+        glm::ivec3 voxel = glm::mod(n, glm::vec3(16.0f));
+
+        //int current = op.isBlock ? chunk.getLight(voxel.x, voxel.y, voxel.z) :
+        //    chunk.getSunlight(voxel.x, voxel.y, voxel.z);
+        int current = chunk.getLight(voxel.x, voxel.y, voxel.z);
+        int newLight = 0;
+
+        int blockType = chunk.getBlock(voxel.x, voxel.y, voxel.z);
+        int opacity = Blocks::opacity(blockType);
+        int emission = Blocks::luminance(blockType);
+
+        if (opacity < 15 || emission != 0)
+        {
+            int max = 0;
+            for (int i = 0; i < 6; i++)
+            {
+                glm::ivec3 coords = glm::floor(static_cast<glm::vec3>(pos + neighbors[i]) / 16.0f);
+                auto c = m_chunks.find(coords);
+                if (c != m_chunks.end())
+                {
+                    Chunk &neighbor = *c->second;
+                    glm::vec3 n2 = pos + neighbors[i];
+                    glm::ivec3 voxel2 = glm::mod(n2, glm::vec3(16.0f));
+                    int val = neighbor.getLight(voxel2.x, voxel2.y, voxel2.z);
+                    max = (std::max)(max, val);
+                }
+            }
+
+            newLight = (std::max)(max - opacity, emission);
+            newLight = (std::max)(newLight, 0);
+        }
+
+        if (newLight != current)
+        {
+            chunk.setLight(voxel.x, voxel.y, voxel.z, newLight);
+            chunk.setDirty(true);
+            int val = (std::max)(newLight - 1, 0);
+
+            propegate(x - 1, y,     z, val, op);
+            propegate(x,     y - 1, z, val, op);
+            propegate(x,     y,     z - 1, val, op);
+
+            if (x + 1 >= op.max.x)
+                propegate(x + 1, y, z, val, op);
+            if (y + 1 >= op.max.y)
+                propegate(x, y + 1, z, val, op);
+            if (z + 1 >= op.max.z)
+                propegate(x, y, z + 1, val, op);
+        }
+    }
+}
+
+bool Lighting::empty()
+{
+    return m_ops.empty();
+}
+
+void Lighting::propegate(int x, int y, int z, int val, const LightOp &op)
+{
+    glm::ivec3 coords(x, y, z);
+    auto c = m_chunks.find(glm::floor(static_cast<glm::vec3>(coords) / 16.0f));
+    if (c == m_chunks.end())
+        return;
+
+    Chunk &chunk = *c->second;
+
+    glm::vec3 n = coords;
+    glm::ivec3 voxel = glm::mod(n, glm::vec3(16.0f));
+
+    int current = chunk.getLight(voxel.x, voxel.y, voxel.z);
+    if (val == current)
+        return;
+    
+    int blockType = chunk.getBlock(voxel.x, voxel.y, voxel.z);
+    int emission = Blocks::luminance(blockType);
+
+    val = (std::max)(emission, val);
+
+    if (val != current)
+    {
+        pushUpdate(op.isBlock, coords, coords + glm::ivec3(1));
+    }
+}

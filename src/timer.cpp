@@ -13,4 +13,4 @@ void Timer::log(std::string label)
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_start);
 
     std::cout << label << diff.count() << "ms" << std::endl;
-}
+}   

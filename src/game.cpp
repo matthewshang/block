@@ -12,11 +12,13 @@
 
 #include "blocks.h"
 #include "chunk.h"
+#include "timer.h"
 
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -28)),
     m_chunkGenerator(), m_processed(), m_renderer(m_chunks), m_player(glm::vec3(-88, 55, -28), m_camera),
-    m_input(window)
+    m_input(window), m_lighting(m_chunks)
 {
+    m_cooldown = 0.0f;
     glfwGetWindowSize(m_window, &m_width, &m_height);
     m_renderer.resize(m_width, m_height);
     m_ratio = static_cast<float>(m_width) / static_cast<float>(m_height);
@@ -57,6 +59,21 @@ void Game::run()
             m_frustum.setCam(m_camera.getPos(), m_camera.getPos() + m_camera.getFront(), glm::vec3(0, 1, 0));
 
             updateChunks();
+
+            Timer t;
+            t.start();
+
+            int i = 0;
+            while (!m_lighting.empty() && i++ < 4000)
+            {
+                m_lighting.lightNext();
+            }
+
+            if (i > 0)
+            {
+                t.log("Lighting: ");
+                std::cout << i << std::endl;
+            }
 
             accumulator -= dt;
         }
@@ -198,8 +215,10 @@ void Game::processInput(float dt)
                 glm::vec3 integral(16.0f);
                 glm::ivec3 ipos2 = glm::mod(rpos, integral);
                 c->setBlock(ipos2.x, ipos2.y, ipos2.z, block);
-                dirtyChunks(coords);
+                //dirtyChunks(coords);
+                c->setDirty(true);
                 m_cooldown = 0.0f;
+                m_lighting.pushUpdate(true, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
             }
         }
     }
