@@ -259,10 +259,11 @@ void Game::loadNearest(const glm::ivec3 &center, int maxJobs)
         {
             Chunk *c = new Chunk(bestCoords);
             m_loadedChunks.insert(bestCoords);
-            auto lambda = [c, this]() -> void
+            auto lambda = [bestCoords, c, this]() -> void
             {
                 m_chunkGenerator.generate(*c);
                 c->compute(m_chunks);
+                m_lighting.pushUpdate(true, bestCoords * 16, (bestCoords + 1) * 16);
                 std::unique_ptr<Chunk> ptr(c);
                 m_processed.push_back(ptr);
             };

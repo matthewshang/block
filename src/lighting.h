@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <mutex>
 
 #include <glm/glm.hpp>
 
@@ -27,7 +28,9 @@ public:
 
 private:
     void propegate(int x, int y, int z, int val, const LightOp &op);
+    void dirty(Chunk &chunk, const glm::ivec3 &pos);
 
     std::deque<LightOp> m_ops;
     ChunkMap &m_chunks;
+    std::mutex m_mutex;
 };
