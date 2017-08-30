@@ -11,7 +11,8 @@ class Player
 {
 public:
     Player(const glm::vec3 &pos, Camera &camera) : 
-        m_pos(pos), m_camera(camera), m_flying(false), m_fov(45.0f) {};
+        m_pos(pos), m_camera(camera), m_flying(false), m_fov(45.0f),
+        m_flyTimer(0.0f) {};
 
     void update(float dt, ChunkMap &chunks, InputManager &input);
 

@@ -69,11 +69,11 @@ void Game::run()
                 m_lighting.lightNext();
             }
 
-            if (i > 0)
-            {
-                t.log("Lighting: ");
-                std::cout << i << std::endl;
-            }
+            //if (i > 0)
+            //{
+            //    t.log("Lighting: ");
+            //    std::cout << i << std::endl;
+            //}
 
             accumulator -= dt;
         }
@@ -93,8 +93,8 @@ void Game::run()
             glm::ivec3 ipos = glm::floor(m_camera.getPos() / 16.0f);
             char title[256];
             title[255] = '\0';
-            snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [pos: %f, %f, %f] [chunk: %d %d %d]", 
-                nFrames, m_chunks.size(), m_pool.getJobsAmount(),
+            snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [%d ops] [pos: %f, %f, %f] [chunk: %d %d %d]", 
+                nFrames, m_chunks.size(), m_pool.getJobsAmount(), m_lighting.getNumOps(),
                 m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z, ipos.x, ipos.y, ipos.z);
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
@@ -215,8 +215,6 @@ void Game::processInput(float dt)
                 glm::vec3 integral(16.0f);
                 glm::ivec3 ipos2 = glm::mod(rpos, integral);
                 c->setBlock(ipos2.x, ipos2.y, ipos2.z, block);
-                //dirtyChunks(coords);
-                c->setDirty(true);
                 m_cooldown = 0.0f;
                 m_lighting.pushUpdate(true, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
             }
@@ -263,7 +261,6 @@ void Game::loadNearest(const glm::ivec3 &center, int maxJobs)
             {
                 m_chunkGenerator.generate(*c);
                 c->compute(m_chunks);
-                m_lighting.pushUpdate(true, bestCoords * 16, (bestCoords + 1) * 16);
                 std::unique_ptr<Chunk> ptr(c);
                 m_processed.push_back(ptr);
             };
@@ -349,21 +346,7 @@ void Game::updateChunks()
     {
         glm::ivec3 coords = c->getCoords();
         m_chunks.insert(std::make_pair(coords, std::move(c)));
-
-        for (int x = -1; x < 2; x++)
-        {
-            for (int y = -1; y < 2; y++)
-            {
-                for (int z = -1; z < 2; z++)
-                {
-                    auto neighbor = m_chunks.find(coords + glm::ivec3(x, y, z));
-                    if (neighbor != m_chunks.end())
-                    {
-                        neighbor->second->setDirty(true);
-                    }
-                }
-            }
-        }
+        m_lighting.pushUpdate(true, coords * 16, (coords + 1) * 16);
     };
 
     m_processed.for_each(move);

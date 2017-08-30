@@ -25,6 +25,7 @@ public:
 
     void lightNext();
     bool empty();
+    int getNumOps() const { return m_ops.size(); };
 
 private:
     void propegate(int x, int y, int z, int val, const LightOp &op);
