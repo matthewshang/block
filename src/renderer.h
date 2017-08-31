@@ -11,11 +11,12 @@
 #include "mesh.h"
 #include "shader.h"
 #include "texture.h"
+#include "world.h"
 
 class Renderer
 {
 public:
-    Renderer(ChunkMap &chunks);
+    Renderer(World &world);
 
     void resize(int width, int height);
 
@@ -26,7 +27,7 @@ public:
     void unselect() { m_showSelect = false; };
 
 private:
-    ChunkMap &m_chunks;
+    World &m_world;
 
     int m_width;
     int m_height;

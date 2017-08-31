@@ -10,6 +10,7 @@
 #include "blocks.h"
 #include "computejob.h"
 #include "timer.h"
+#include "world.h"
 
 const int Chunk::opposites[6] = {
     1, 0, 3, 2, 5, 4
@@ -39,6 +40,11 @@ uint8_t Chunk::getBlock(int x, int y, int z)
     return m_blocks[x][y][z];
 }
 
+uint8_t Chunk::getBlock(const glm::ivec3 &pos)
+{
+    return m_blocks[pos.x][pos.y][pos.z];
+}
+
 void Chunk::setSunlight(int x, int y, int z, int val)
 {
     m_lightmap[x][y][z] = (m_lightmap[x][y][z] & 0xF) | (val << 4);
@@ -47,6 +53,11 @@ void Chunk::setSunlight(int x, int y, int z, int val)
 int Chunk::getSunlight(int x, int y, int z)
 {
     return (m_lightmap[x][y][z] >> 4) & 0xF;
+}
+
+int Chunk::getSunlight(const glm::ivec3 &pos)
+{
+    return (m_lightmap[pos.x][pos.y][pos.z] >> 4) & 0xF;
 }
 
 void Chunk::setLight(int x, int y, int z, int val)
@@ -59,6 +70,11 @@ int Chunk::getLight(int x, int y, int z)
     return (m_lightmap[x][y][z]) & 0xF;
 }
 
+int Chunk::getLight(const glm::ivec3 &pos)
+{
+    return (m_lightmap[pos.x][pos.y][pos.z]) & 0xF;
+}
+
 void Chunk::bufferData()
 {
     if (m_glDirty)
@@ -68,12 +84,12 @@ void Chunk::bufferData()
     }
 }
 
-void Chunk::compute(ChunkMap &chunks)
+void Chunk::compute(World &world)
 {
     if (!m_dirty)
         return;
 
-    ComputeJob job(*this, chunks);
+    ComputeJob job(*this, world);
     job.execute();
     job.transfer();
 }

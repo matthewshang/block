@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 
 #include "camera.h"
-#include "common.h"
+#include "world.h"
 
 class InputManager;
 
@@ -14,7 +14,7 @@ public:
         m_pos(pos), m_camera(camera), m_flying(false), m_fov(45.0f),
         m_flyTimer(0.0f) {};
 
-    void update(float dt, ChunkMap &chunks, InputManager &input);
+    void update(float dt, World &world, InputManager &input);
 
     const glm::vec3 &getPos() const { return m_pos; };
     void setPos(const glm::vec3 &pos) { m_pos = pos; };
@@ -22,7 +22,7 @@ public:
     float getFov() const { return m_fov; };
 
 private:
-    bool collide(glm::vec3 &pos, ChunkMap &chunks);
+    bool collide(glm::vec3 &pos, World &world);
 
     glm::vec3 m_pos;
     glm::vec3 m_vel;

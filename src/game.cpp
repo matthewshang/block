@@ -15,8 +15,8 @@
 #include "timer.h"
 
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -28)),
-    m_chunkGenerator(), m_processed(), m_renderer(m_chunks), m_player(glm::vec3(-88, 55, -28), m_camera),
-    m_input(window), m_lighting(m_chunks)
+    m_chunkGenerator(), m_processed(), m_renderer(m_world), m_player(glm::vec3(-88, 55, -28), m_camera),
+    m_input(window), m_lighting(m_world), m_world()
 {
     m_cooldown = 0.0f;
     glfwGetWindowSize(m_window, &m_width, &m_height);
@@ -53,7 +53,7 @@ void Game::run()
         while (accumulator >= dt)
         {
             processInput(dt);
-            m_player.update(dt, m_chunks, m_input);
+            m_player.update(dt, m_world, m_input);
 
             m_frustum.setInternals(m_player.getFov(), m_ratio, 0.1f, m_viewDistance);
             m_frustum.setCam(m_camera.getPos(), m_camera.getPos() + m_camera.getFront(), glm::vec3(0, 1, 0));
@@ -94,39 +94,13 @@ void Game::run()
             char title[256];
             title[255] = '\0';
             snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [%d ops] [pos: %f, %f, %f] [chunk: %d %d %d]", 
-                nFrames, m_chunks.size(), m_pool.getJobsAmount(), m_lighting.getNumOps(),
+                nFrames, m_world.getMap().size(), m_pool.getJobsAmount(), m_lighting.getNumOps(),
                 m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z, ipos.x, ipos.y, ipos.z);
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
             nFrames = 0;
         }
     }
-}
-
-static Chunk *getChunk(ChunkMap &chunks, glm::ivec3 coords)
-{
-    auto chunk = chunks.find(coords);
-    if (chunk != chunks.end())
-    {
-        return chunk->second.get();
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
-int Game::getVoxel(const glm::ivec3 &i)
-{
-    glm::ivec3 coords = glm::floor(static_cast<glm::vec3>(i) / 16.0f);
-    Chunk *c = getChunk(m_chunks, coords);
-    if (c == nullptr)
-        return Blocks::Air;
-   
-    glm::vec3 integral(16.0f);
-    glm::vec3 n = i;
-    glm::ivec3 ipos = glm::mod(n, integral);
-    return c->getBlock(ipos.x, ipos.y, ipos.z);
 }
 
 int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos)
@@ -140,7 +114,7 @@ int Game::traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm,
         float len = static_cast<float>(i) / (static_cast<float>(steps) * stepSize);
         glm::vec3 v = p + dir * len;
         glm::ivec3 iv = glm::round(v);
-        int b = getVoxel(iv);
+        int b = m_world.getBlockType(iv);
         if (b == Blocks::Air)
         {
             lastEmpty = i;
@@ -207,14 +181,7 @@ void Game::processInput(float dt)
             if (hit)
             {
                 glm::vec3 rpos = block == Blocks::Air ? hitPos : hitPos + hitNorm;
-                glm::ivec3 coords = glm::floor(rpos / 16.0f);
-                Chunk *c = getChunk(m_chunks, coords);
-                if (c == nullptr)
-                    return;
-
-                glm::vec3 integral(16.0f);
-                glm::ivec3 ipos2 = glm::mod(rpos, integral);
-                c->setBlock(ipos2.x, ipos2.y, ipos2.z, block);
+                m_world.setBlockType(rpos, block);
                 m_cooldown = 0.0f;
                 m_lighting.pushUpdate(true, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
             }
@@ -237,7 +204,7 @@ void Game::loadNearest(const glm::ivec3 &center, int maxJobs)
                 for (int z = -m_loadDistance; z <= m_loadDistance; z++)
                 {
                     glm::ivec3 coords = center + glm::ivec3(x, y, z);
-                    if (m_loadedChunks.find(coords) != m_loadedChunks.end())
+                    if (m_world.hasChunk(coords))
                         continue;
 
                     int visible = !m_frustum.boxInFrustum(static_cast<glm::vec3>(coords * 16), glm::vec3(16));
@@ -256,11 +223,11 @@ void Game::loadNearest(const glm::ivec3 &center, int maxJobs)
         if (found)
         {
             Chunk *c = new Chunk(bestCoords);
-            m_loadedChunks.insert(bestCoords);
+            m_world.loaded(bestCoords);
             auto lambda = [bestCoords, c, this]() -> void
             {
                 m_chunkGenerator.generate(*c);
-                c->compute(m_chunks);
+                c->compute(m_world);
                 std::unique_ptr<Chunk> ptr(c);
                 m_processed.push_back(ptr);
             };
@@ -281,7 +248,7 @@ void Game::updateNearest(const glm::ivec3 &center, int maxJobs)
         int bestScore = std::numeric_limits<int>::max();
         Chunk *bestChunk = nullptr;
 
-        for (const auto& it : m_chunks)
+        for (const auto& it : m_world.getMap())
         {
             auto& chunk = it.second;
             if (!chunk->isDirty())
@@ -304,7 +271,7 @@ void Game::updateNearest(const glm::ivec3 &center, int maxJobs)
             bestChunk->setDirty(false);
             auto update = [this, bestChunk]() -> void
             {
-                auto compute = std::make_unique<ComputeJob>(*bestChunk, m_chunks);
+                auto compute = std::make_unique<ComputeJob>(*bestChunk, m_world);
                 compute->execute();
                 m_updates.push_back(compute);
             };
@@ -321,31 +288,32 @@ void Game::updateChunks()
 {
     glm::ivec3 current = static_cast<glm::vec3>(glm::floor(m_camera.getPos() / 16.0f));
     int maxJobs = std::max(m_pool.getWorkerAmount() - m_pool.getJobsAmount(), 1);
+    std::vector<glm::ivec3> toErase;
 
     loadNearest(current, maxJobs);
 
-    for (const auto &it : m_chunks)
+    for (const auto &it : m_world.getMap())
     {
         auto &chunk = it.second;
         if (glm::distance(chunk->getCenter(), m_camera.getPos()) > m_eraseDistance)
         {
-            m_toErase.push_back(chunk->getCoords());
+            toErase.push_back(chunk->getCoords());
         }
     }
 
-    for (const auto &chunk : m_toErase)
+    for (const auto &chunk : toErase)
     {
-        m_chunks.erase(chunk);
-        m_loadedChunks.erase(chunk);
+        m_world.unloadChunk(chunk);
     }
-    m_toErase.clear();
+    toErase.clear();
 
     updateNearest(current, maxJobs);
 
     auto move = [this](std::unique_ptr<Chunk> &c) -> void
     {
         glm::ivec3 coords = c->getCoords();
-        m_chunks.insert(std::make_pair(coords, std::move(c)));
+        m_world.insert(coords, c);
+        //m_chunks.insert(std::make_pair(coords, std::move(c)));
         m_lighting.pushUpdate(true, coords * 16, (coords + 1) * 16);
     };
 
@@ -359,42 +327,4 @@ void Game::updateChunks()
 
     m_updates.for_each(update);
     m_updates.clear();
-}
-
-void Game::dirtyChunks(glm::ivec3 center)
-{
-    for (int x = -1; x < 2; x++)
-    {
-        for (int y = -1; y < 2; y++)
-        {
-            for (int z = -1; z < 2; z++)
-            {
-                auto neighbor = m_chunks.find(center + glm::ivec3(x, y, z));
-                if (neighbor != m_chunks.end())
-                    neighbor->second->setDirty(true);
-            }
-        }
-    }
-}
-
-
-Chunk *Game::chunkFromWorld(const glm::vec3 &pos)
-{
-    //glm::vec3 toChunk = pos / 16.0f;
-    //int x = static_cast<int>(std::floorf(toChunk.x));
-    //int y = static_cast<int>(std::floorf(toChunk.y));
-    //int z = static_cast<int>(std::floorf(toChunk.z));
-
-    glm::ivec3 coords = glm::floor(glm::round(pos) / 16.0f);
-
-
-    auto chunk = m_chunks.find(coords);
-    if (chunk != m_chunks.end())
-    {
-        return chunk->second.get();
-    }
-    else
-    {
-        return nullptr;
-    }
 }

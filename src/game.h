@@ -20,6 +20,7 @@
 #include "sharedvector.h"
 #include "terraingenerator.h"
 #include "threadpool.h"
+#include "world.h"
 
 class Game
 {
@@ -29,7 +30,6 @@ public:
     void run();
 
 private:
-    int getVoxel(const glm::ivec3 &i);
     int traceRay(glm::vec3 p, glm::vec3 dir, float range, glm::ivec3 &hitNorm, glm::ivec3 &hitIpos);
     bool raycast(glm::vec3 origin, glm::vec3 dir, float range, glm::ivec3 &hit, glm::ivec3 &norm);
     void processInput(float dt);
@@ -38,18 +38,13 @@ private:
     void updateNearest(const glm::ivec3 &center, int maxJobs);
     void updateChunks();
 
-    void dirtyChunks(glm::ivec3 center);
-    Chunk *chunkFromWorld(const glm::vec3 &pos);
-
-    const int m_loadDistance = 2;
+    const int m_loadDistance = 1;
     float m_eraseDistance;
     float m_viewDistance;
 
-    ChunkMap m_chunks;
-    std::set<glm::ivec3, ChunkCompare> m_loadedChunks;
+    World m_world;
     SharedVector<std::unique_ptr<Chunk>> m_processed;
     SharedVector<std::unique_ptr<ComputeJob>> m_updates;
-    std::vector<glm::ivec3> m_toErase;
 
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;

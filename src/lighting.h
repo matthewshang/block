@@ -1,11 +1,18 @@
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <deque>
+#include <map>
+#include <memory>
 #include <mutex>
 
 #include <glm/glm.hpp>
 
-#include "common.h"
+//#include "common.h"
+#include "world.h"
 
 struct LightOp
 {
@@ -19,7 +26,7 @@ struct LightOp
 class Lighting
 {
 public:
-    Lighting(ChunkMap &chunks) : m_ops(), m_chunks(chunks) {};
+    Lighting(World &world) : m_ops(), m_world(world) {};
 
     void pushUpdate(bool isBlock, const glm::ivec3 &min, const glm::ivec3 &max);
 
@@ -32,6 +39,6 @@ private:
     void dirty(Chunk &chunk, const glm::ivec3 &pos);
 
     std::deque<LightOp> m_ops;
-    ChunkMap &m_chunks;
+    World &m_world;
     std::mutex m_mutex;
 };

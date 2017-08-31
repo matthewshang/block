@@ -8,7 +8,7 @@
 #include "chunk.h"
 #include "inputmanager.h"
 
-void Player::update(float dt, ChunkMap &chunks, InputManager &input)
+void Player::update(float dt, World &world, InputManager &input)
 {
     m_flyTimer += dt;
 
@@ -124,7 +124,7 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
 
         m_pos += m_moveVel * ut;
 
-        if (collide(m_pos, chunks))
+        if (collide(m_pos, world))
         {
             m_moveVel.y = 0.0f;
         }
@@ -136,11 +136,10 @@ void Player::update(float dt, ChunkMap &chunks, InputManager &input)
 static Chunk *getChunk(ChunkMap &chunks, const glm::ivec3 &coords);
 static int getBlock(Chunk *chunks[7], Chunk *edges[4], int x, int y, int z);
 
-bool Player::collide(glm::vec3 &pos, ChunkMap &chunks)
+bool Player::collide(glm::vec3 &pos, World &world)
 {
     bool hitY = false;
-    glm::ivec3 coords = glm::floor(glm::round(pos) / 16.0f);
-    Chunk *c = getChunk(chunks, coords);
+    Chunk *c = world.getChunkFromCoords(glm::floor(glm::round(pos) / 16.0f));
     if (c == nullptr)
         return hitY;
 
@@ -155,19 +154,19 @@ bool Player::collide(glm::vec3 &pos, ChunkMap &chunks)
     int h = 2;
 
     neighbors[0] = c;
-    if (ipos.x == 0) neighbors[1] = getChunk(chunks, c->getCoords() - glm::ivec3(1, 0, 0));
-    if (ipos.x == 15) neighbors[2] = getChunk(chunks, c->getCoords() + glm::ivec3(1, 0, 0));
-    if (ipos.y <= h - 1) neighbors[3] = getChunk(chunks, c->getCoords() - glm::ivec3(0, 1, 0));
-    if (ipos.y == 15) neighbors[4] = getChunk(chunks, c->getCoords() + glm::ivec3(0, 1, 0));
-    if (ipos.z == 0) neighbors[5] = getChunk(chunks, c->getCoords() - glm::ivec3(0, 0, 1));
-    if (ipos.z == 15) neighbors[6] = getChunk(chunks, c->getCoords() + glm::ivec3(0, 0, 1));
+    if (ipos.x == 0) neighbors[1] =     world.getChunkFromCoords(c->getCoords() - glm::ivec3(1, 0, 0));
+    if (ipos.x == 15) neighbors[2] =    world.getChunkFromCoords(c->getCoords() + glm::ivec3(1, 0, 0));
+    if (ipos.y <= h - 1) neighbors[3] = world.getChunkFromCoords(c->getCoords() - glm::ivec3(0, 1, 0));
+    if (ipos.y == 15) neighbors[4] =    world.getChunkFromCoords(c->getCoords() + glm::ivec3(0, 1, 0));
+    if (ipos.z == 0) neighbors[5] =     world.getChunkFromCoords(c->getCoords() - glm::ivec3(0, 0, 1));
+    if (ipos.z == 15) neighbors[6] =    world.getChunkFromCoords(c->getCoords() + glm::ivec3(0, 0, 1));
 
     if (ipos.y < h - 1)
     {
-        edges[0] = getChunk(chunks, c->getCoords() + glm::ivec3(-1, -1, 0));
-        edges[1] = getChunk(chunks, c->getCoords() + glm::ivec3(1, -1, 0));
-        edges[2] = getChunk(chunks, c->getCoords() + glm::ivec3(0, -1, -1));
-        edges[3] = getChunk(chunks, c->getCoords() + glm::ivec3(0, -1, 1));
+        edges[0] = world.getChunkFromCoords(c->getCoords() + glm::ivec3(-1, -1, 0));
+        edges[1] = world.getChunkFromCoords(c->getCoords() + glm::ivec3(1, -1, 0));
+        edges[2] = world.getChunkFromCoords(c->getCoords() + glm::ivec3(0, -1, -1));
+        edges[3] = world.getChunkFromCoords(c->getCoords() + glm::ivec3(0, -1, 1));
     }
 
     for (int y = 0; y < h; y++)

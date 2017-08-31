@@ -6,8 +6,8 @@
 #include "geometry.h"
 #include "timer.h"
 
-Renderer::Renderer(ChunkMap &chunks) :
-    m_chunks(chunks), m_chunkShader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl"),
+Renderer::Renderer(World &world) :
+    m_world(world), m_chunkShader("../res/shaders/block_vertex.glsl", "../res/shaders/block_fragment.glsl"),
     m_chunkTexture("../res/textures/terrain2.png", GL_RGBA),
     m_selectShader("../res/shaders/select_vertex.glsl", "../res/shaders/select_fragment.glsl"),
     m_crosshair("../res/textures/crosshair.png", GL_RGBA),
@@ -56,7 +56,7 @@ void Renderer::render(Camera &cam, Frustum &f)
 
     m_projection = glm::perspective(glm::radians(f.getFov()), f.getRatio(), f.getNear(), f.getFar());
 
-    for (const auto &it : m_chunks)
+    for (const auto &it : m_world.getMap())
     {
         auto &chunk = it.second;
         if (!chunk->isEmpty())

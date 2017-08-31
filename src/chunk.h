@@ -9,6 +9,8 @@
 #include "common.h"
 #include "mesh.h"
 
+class World;
+
 const int CHUNK_SIZE = 16;
 
 class Chunk
@@ -20,7 +22,7 @@ public:
 
     Chunk(glm::ivec3 pos);
 
-    void compute(ChunkMap &chunks);
+    void compute(World &world);
     void bufferData();
 
     Mesh &getMesh() const { return *m_mesh; };
@@ -29,10 +31,13 @@ public:
     bool isEmpty();
     void setBlock(int x, int y, int z, uint8_t type);
     uint8_t getBlock(int x, int y, int z);
+    uint8_t getBlock(const glm::ivec3 &pos);
     void setSunlight(int x, int y, int z, int val);
     int getSunlight(int x, int y, int z);
+    int getSunlight(const glm::ivec3 &pos);
     void setLight(int x, int y, int z, int val);
     int getLight(int x, int y, int z);
+    int getLight(const glm::ivec3 &pos);
 
     const glm::ivec3 &getCoords() { return m_pos; };
     const glm::vec3 &getCenter() { return m_worldCenter; };
