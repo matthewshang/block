@@ -6,7 +6,6 @@
 
 #include <glm/glm.hpp>
 
-#include "common.h"
 #include "mesh.h"
 
 class World;

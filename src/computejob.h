@@ -24,7 +24,6 @@ private:
     void buildMesh();
 
     World &m_world;
-    ChunkMap &m_chunks;
     Chunk &m_chunk;
     std::vector<float> m_vertices;
     bool m_empty;

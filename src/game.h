@@ -9,8 +9,6 @@
 
 #include "camera.h"
 #include "chunk.h"
-#include "chunkcompare.h"
-#include "common.h"
 #include "computejob.h"
 #include "frustum.h"
 #include "lighting.h"

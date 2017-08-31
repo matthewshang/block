@@ -9,7 +9,7 @@
 #include "timer.h"
 
 ComputeJob::ComputeJob(Chunk &chunk, World &world) :
-    m_chunk(chunk), m_world(world), m_chunks(world.getMap())
+    m_chunk(chunk), m_world(world)
 {
 }
 

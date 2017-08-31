@@ -1,8 +1,13 @@
 #pragma once
 
+#include <map>
+#include <memory>
+
 #include <glm/glm.hpp>
 
-struct ChunkCompare
+#include "chunk.h"
+
+struct Vec3Comp
 {
     bool operator() (const glm::ivec3 &a, const glm::ivec3 &b) const
     {
@@ -16,3 +21,5 @@ struct ChunkCompare
             return false;
     }
 };
+
+typedef std::map<glm::ivec3, std::unique_ptr<Chunk>, Vec3Comp> ChunkMap;
