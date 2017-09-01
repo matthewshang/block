@@ -13,6 +13,7 @@ public:
 private:
     void putTree(Chunk &c, int x, int y, int z);
     double getHeight(double x, double z);
+    void initSunlight(Chunk &c);
 
     Perlin m_highNoise;
     Perlin m_lowNoise;

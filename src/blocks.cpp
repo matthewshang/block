@@ -84,7 +84,7 @@ int Blocks::opacity(int type)
     case GrassPlant:
     case Leaves:
     case Glowstone:
-        return 1;
+        return 0;
     default:
         return 255;
     }

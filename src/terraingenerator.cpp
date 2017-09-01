@@ -97,6 +97,8 @@ void TerrainGenerator::generate(Chunk &c)
             c.setBlock(i, 4, 7, Blocks::Sand);
         }
     }
+
+    initSunlight(c);
 }
 
 static bool canPutTree(int x, int y, int z)
@@ -164,4 +166,31 @@ double TerrainGenerator::getHeight(double x, double z)
     if (val > 256)
         val = 255;
     return val;
+}
+
+void TerrainGenerator::initSunlight(Chunk &c)
+{
+    for (int x = 0; x < 16; x++)
+    for (int z = 0; z < 16; z++)
+    {
+        int sunlight = 15;
+        int y = 15;
+        while (y >= 0)
+        {
+            int type = c.getBlock(x, y, z);
+            int opacity = Blocks::opacity(type);
+
+            sunlight -= opacity;
+            if (sunlight > 0)
+            {
+                c.setSunlight(x, y, z, sunlight);
+            }
+            else
+            {
+                break;
+            }
+
+            y--;
+        }
+    }
 }

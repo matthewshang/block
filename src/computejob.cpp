@@ -143,6 +143,11 @@ int ComputeJob::getBlockType(const glm::ivec3 &worldPos)
     }
 }
 
+bool isVisible(int type)
+{
+    return !Blocks::isSolid(type) || type == Blocks::Leaves;
+}
+
 void ComputeJob::buildMesh()
 {
     int total = 0;
@@ -170,6 +175,8 @@ void ComputeJob::buildMesh()
 
         if (Blocks::isPlant(type))
         {
+            //float light = std::powf(0.8f, 15 - m_chunk.getLight(local));
+            //float sunlight = std::powf(0.8f, 15 - m_chunk.getSunlight(local));
             float light = static_cast<float>(m_chunk.getLight(local)) / 16.0f;
             float sunlight = static_cast<float>(m_chunk.getSunlight(local)) / 16.0f;
 
@@ -184,15 +191,17 @@ void ComputeJob::buildMesh()
                 {
                     light[i][j] /= 16.0f;
                     sunlight[i][j] /= 16.0f;
+                    //light[i][j] = std::powf(0.9f, 15.0f - light[i][j]);
+                    //sunlight[i][j] = std::powf(0.9f, 15.0f - sunlight[i][j]);
                 }
             }
 
-            visible[0] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(0, 0, 1)));
-            visible[1] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(0, 0, -1)));
-            visible[2] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(-1, 0, 0)));
-            visible[3] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(1, 0, 0)));
-            visible[4] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(0, 1, 0)));
-            visible[5] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(0, -1, 0)));
+            visible[0] = isVisible(getBlockType(pos + glm::ivec3(0, 0, 1)));
+            visible[1] = isVisible(getBlockType(pos + glm::ivec3(0, 0, -1)));
+            visible[2] = isVisible(getBlockType(pos + glm::ivec3(-1, 0, 0)));
+            visible[3] = isVisible(getBlockType(pos + glm::ivec3(1, 0, 0)));
+            visible[4] = isVisible(getBlockType(pos + glm::ivec3(0, 1, 0)));
+            visible[5] = isVisible(getBlockType(pos + glm::ivec3(0, -1, 0)));
 
             Geometry::makeCube(m_vertices, pos.x, pos.y, pos.z, visible,
                 type, light, sunlight);

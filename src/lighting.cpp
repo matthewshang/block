@@ -39,7 +39,8 @@ void Lighting::lightNext()
         int newLight = 0;
 
         int blockType = chunk->getBlock(voxel);
-        int opacity = Blocks::opacity(blockType);
+        int opacity = std::max(Blocks::opacity(blockType), 1);
+
         int emission = Blocks::luminance(blockType);
         if (!op.isBlock)
         {
