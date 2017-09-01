@@ -43,7 +43,11 @@ void Lighting::lightNext()
         int emission = Blocks::luminance(blockType);
         if (!op.isBlock)
         {
-
+            int h = m_world.getHeight(x, z);
+            if (y > h)
+            {
+                emission = 15;
+            }
         }
 
         if (opacity < 15 || emission != 0)
@@ -51,7 +55,8 @@ void Lighting::lightNext()
             int max = 0;
             for (int i = 0; i < 6; i++)
             {
-                max = (std::max)(max, m_world.getLight(pos + neighbors[i]));
+                max = (std::max)(max, op.isBlock ? m_world.getLight(pos + neighbors[i]) :
+                    m_world.getSunlight(pos + neighbors[i]));
             }
 
             newLight = (std::max)(max - opacity, emission);
@@ -60,7 +65,11 @@ void Lighting::lightNext()
 
         if (newLight != current)
         {
-            chunk->setLight(voxel.x, voxel.y, voxel.z, newLight);
+            if (op.isBlock)
+                chunk->setLight(voxel.x, voxel.y, voxel.z, newLight);
+            else
+                chunk->setSunlight(voxel.x, voxel.y, voxel.z, newLight);
+
             dirty(*chunk, voxel);
             int val = (std::max)(newLight - 1, 0);
 
@@ -91,7 +100,7 @@ void Lighting::propegate(int x, int y, int z, int val, const LightOp &op)
     if (chunk == nullptr)
         return;
 
-    int current = chunk->getLight(voxel);
+    int current = op.isBlock ? chunk->getLight(voxel): chunk->getSunlight(voxel);
     if (val == current)
         return;
     

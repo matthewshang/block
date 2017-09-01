@@ -99,6 +99,7 @@ void Game::run()
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
             nFrames = 0;
+            //std::cout << m_world.getHeight(m_camera.getPos().x, m_camera.getPos().z) << std::endl;;
         }
     }
 }
@@ -184,6 +185,7 @@ void Game::processInput(float dt)
                 m_world.setBlockType(rpos, block);
                 m_cooldown = 0.0f;
                 m_lighting.pushUpdate(true, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
+                m_lighting.pushUpdate(false, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
             }
         }
     }
@@ -315,6 +317,7 @@ void Game::updateChunks()
         m_world.insert(coords, c);
         //m_chunks.insert(std::make_pair(coords, std::move(c)));
         m_lighting.pushUpdate(true, coords * 16, (coords + 1) * 16);
+        m_lighting.pushUpdate(false, coords * 16, (coords + 1) * 16);
     };
 
     m_processed.for_each(move);

@@ -10,19 +10,40 @@
 #include "chunk.h"
 #include "chunkmap.h"
 
+struct HeightMap
+{
+    HeightMap() : m_data{ 0 }, chunkHeight(0) {};
+    void set(int x, int z, int height)
+    {
+        m_data[x * 16 + z] = height;
+    }
+
+    uint16_t get(int x, int z)
+    {
+        return m_data[x * 16 + z];
+    }
+
+    int chunkHeight;
+
+private:
+    std::array<uint16_t, 16 * 16> m_data;
+};
+
 class World
 {
 public:
     World();
 
     void insert(const glm::ivec3 &coords, std::unique_ptr<Chunk> &chunk);
-    Chunk *getChunkFromCoords(const glm::ivec3 &coords);
     bool hasChunk(const glm::ivec3 &coords);
     void loaded(const glm::ivec3 &coords);
     void unloadChunk(const glm::ivec3 &coords);
 
+    int getHeight(float x, float z);
+
     Chunk *getChunk(const glm::vec3 &pos);
     Chunk *getChunk(const glm::vec3 &pos, glm::ivec3 *local);
+    Chunk *getChunkFromCoords(const glm::ivec3 &coords);
     
     int getBlockType(const glm::vec3 &pos);
     void setBlockType(const glm::vec3 &pos, uint8_t type);
@@ -33,6 +54,8 @@ public:
     ChunkMap &getMap() { return m_chunks; };
 
 private:
+    HeightMap *getHeightMap(float x, float z, glm::ivec2 *local, bool generate);
+    void updateHeightMap(const glm::ivec2 &coords, HeightMap &map, Chunk &chunk);
 
     struct Vec2Comp
     {
@@ -47,22 +70,6 @@ private:
         }
     };
 
-    struct HeightMap
-    {
-        HeightMap() : m_data{ 0 } {};
-        void set(int x, int z, int height)
-        {
-            m_data[x * 16 + z] = height;
-        }
-
-        uint16_t get(int x, int z)
-        {
-            return m_data[x * 16 + z];
-        }
-
-    private:
-        std::array<uint16_t, 16 * 16> m_data;
-    };
 
     ChunkMap m_chunks;
     std::set<glm::ivec3, Vec3Comp> m_loaded;

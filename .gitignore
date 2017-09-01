@@ -9,3 +9,4 @@ todo.txt
 *.psess
 build
 .DS_Store
+*.TMP

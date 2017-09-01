@@ -51,10 +51,8 @@ void Geometry::makeCube(std::vector<float> &vertices, float x, float y, float z,
             vertices.push_back(positions[i][j].z + z);
             vertices.push_back(tu + texcoords[j].x * s);
             vertices.push_back(tv + texcoords[j].y * s);
-            //int l = std::max(static_cast<float>(light[i][j]), 4.0f);
-            //float lightVal = std::powf(0.8f, 15.0f - l);
-            vertices.push_back(light[i][j] / 16.0f);
-            vertices.push_back(sunlight[i][j] / 16.0f);
+            vertices.push_back(light[i][j]);
+            vertices.push_back(sunlight[i][j]);
         }
     }
 }
@@ -86,7 +84,7 @@ void Geometry::makeSelectCube(std::vector<float> &vertices, float size)
 }
 
 void Geometry::makePlant(std::vector<float> &vertices, float x, float y, float z, int type, 
-    int light, int sunlight)
+    float light, float sunlight)
 {
     static const glm::vec3 positions[2][4] = {
         { glm::vec3(0.5f,  0.5f,  0.0f), glm::vec3(0.5f, -0.5f,  0.0f), glm::vec3(-0.5f, -0.5f,  0.0f), glm::vec3(-0.5f,  0.5f,  0.0f) },
@@ -119,11 +117,8 @@ void Geometry::makePlant(std::vector<float> &vertices, float x, float y, float z
             vertices.push_back(pos.z + z);
             vertices.push_back(tu + texcoords[j].x * s);
             vertices.push_back(tv + texcoords[j].y * s);
-            //int l = std::max(static_cast<float>(light), 4.0f);
-            //float lightVal = std::powf(0.8f, 15.0f - l);
-            float lightVal = (static_cast<float>(light) + 1.0f) / 16.0f;
-            vertices.push_back(lightVal);
-            vertices.push_back((static_cast<float>(sunlight) + 1.0f) / 16.0f);
+            vertices.push_back(light);
+            vertices.push_back(sunlight);
         }
     }
 }

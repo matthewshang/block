@@ -18,7 +18,7 @@ public:
 private:
 
     void smoothLighting(int x, int y, int z, float light[6][4]);
-    void smoothLighting2(int x, int y, int z, float light[6][4], float sunlight[6][4]);
+    void smoothLighting2(const glm::ivec3 &worldPos, float light[6][4], float sunlight[6][4]);
     void faceLighting(const glm::ivec3 &worldPos, float light[6][4]);
     int getBlockType(const glm::ivec3 &worldPos);
     void buildMesh();

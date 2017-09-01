@@ -75,7 +75,7 @@ void ComputeJob::smoothLighting(int x, int y, int z, float light[6][4])
     }
 }
 
-void ComputeJob::smoothLighting2(int x, int y, int z, float light[6][4], float sunlight[6][4])
+void ComputeJob::smoothLighting2(const glm::ivec3 &worldPos, float light[6][4], float sunlight[6][4])
 {
     static const glm::ivec3 start[6][4] = {
         { glm::ivec3(-1, -1, 1), glm::ivec3(-1, 0, 1), glm::ivec3(0, 0, 1), glm::ivec3(0, -1, 1) },
@@ -99,15 +99,14 @@ void ComputeJob::smoothLighting2(int x, int y, int z, float light[6][4], float s
     {
         for (int j = 0; j < 4; j++)
         {
-            glm::ivec3 pos = start[i][j] + glm::ivec3(x, y, z);
+            glm::ivec3 pos = start[i][j] + worldPos;
             float blockVal = 0.0f;
             float sunVal = 0.0f;
             for (int k = 0; k < 4; k++)
             {
                 const glm::ivec3 &d = off[i][k];
-                glm::ivec3 worldPos = m_chunk.getCoords() * 16 + pos + d;
-                blockVal += static_cast<float>(m_world.getLight(pos));
-                sunVal += static_cast<float>(m_world.getSunlight(pos));
+                blockVal += static_cast<float>(m_world.getLight(pos + d));
+                sunVal += static_cast<float>(m_world.getSunlight(pos + d));
             }
             light[i][j] = blockVal / 4.0f;
             sunlight[i][j] = sunVal / 4.0f;
@@ -164,25 +163,37 @@ void ComputeJob::buildMesh()
         glm::ivec3 pos = (m_chunk.getCoords() * 16) + glm::ivec3(x, y, z);
 
         //smoothLighting(dx, dy, dz, light);
-        //smoothLighting2(x, y, z, light, sunlight);
-        faceLighting(pos, light); 
-
-        visible[0] = !Blocks::isSolid(getBlockType(pos + glm::ivec3( 0,  0,  1)));
-        visible[1] = !Blocks::isSolid(getBlockType(pos + glm::ivec3( 0,  0, -1)));
-        visible[2] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(-1,  0,  0)));
-        visible[3] = !Blocks::isSolid(getBlockType(pos + glm::ivec3( 1,  0,  0)));
-        visible[4] = !Blocks::isSolid(getBlockType(pos + glm::ivec3( 0,  1,  0)));
-        visible[5] = !Blocks::isSolid(getBlockType(pos + glm::ivec3( 0, -1,  0)));
+        smoothLighting2(pos, light, sunlight);
+        //faceLighting(pos, light); 
 
         int type = m_chunk.getBlock(local);
 
         if (Blocks::isPlant(type))
         {
+            float light = static_cast<float>(m_chunk.getLight(local)) / 16.0f;
+            float sunlight = static_cast<float>(m_chunk.getSunlight(local)) / 16.0f;
+
             Geometry::makePlant(m_vertices, pos.x, pos.y, pos.z,
-                type, m_chunk.getLight(local), m_chunk.getSunlight(local));
+                type, light, sunlight);
         }
         else
         {
+            for (int i = 0; i < 6; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    light[i][j] /= 16.0f;
+                    sunlight[i][j] /= 16.0f;
+                }
+            }
+
+            visible[0] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(0, 0, 1)));
+            visible[1] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(0, 0, -1)));
+            visible[2] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(-1, 0, 0)));
+            visible[3] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(1, 0, 0)));
+            visible[4] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(0, 1, 0)));
+            visible[5] = !Blocks::isSolid(getBlockType(pos + glm::ivec3(0, -1, 0)));
+
             Geometry::makeCube(m_vertices, pos.x, pos.y, pos.z, visible,
                 type, light, sunlight);
         }
