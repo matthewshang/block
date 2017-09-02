@@ -35,6 +35,7 @@ private:
     void loadNearest(const glm::ivec3 &center, int maxJobs);
     void updateNearest(const glm::ivec3 &center, int maxJobs);
     void updateChunks();
+    void dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos);
 
     const int m_loadDistance = 1;
     float m_eraseDistance;

@@ -12,9 +12,7 @@
 #include "timer.h"
 #include "world.h"
 
-const int Chunk::opposites[6] = {
-    1, 0, 3, 2, 5, 4
-};
+// Data order: X -> Z -> Y
 
 Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(false), m_glDirty(true), m_vertices(),
 m_lightmap{}, m_empty(true), m_blocks{}
@@ -31,48 +29,50 @@ bool Chunk::isEmpty()
 
 void Chunk::setBlock(int x, int y, int z, uint8_t type)
 {
-    m_blocks[x][y][z] = type;
+    m_blocks[x * 16 * 16 + z * 16 + y] = type;
     m_dirty = true;
 }
 
 uint8_t Chunk::getBlock(int x, int y, int z)
 {
-    return m_blocks[x][y][z];
+    return m_blocks[x * 16 * 16 + z * 16 + y];
 }
 
 uint8_t Chunk::getBlock(const glm::ivec3 &pos)
 {
-    return m_blocks[pos.x][pos.y][pos.z];
+    return m_blocks[pos.x * 16 * 16 + pos.z * 16 + pos.y];
 }
 
 void Chunk::setSunlight(int x, int y, int z, int val)
 {
-    m_lightmap[x][y][z] = (m_lightmap[x][y][z] & 0xF) | (val << 4);
+    int idx = x * 16 * 16 + z * 16 + y;
+    m_lightmap[idx] = (m_lightmap[idx] & 0xF) | (val << 4);
 }
 
 int Chunk::getSunlight(int x, int y, int z)
 {
-    return (m_lightmap[x][y][z] >> 4) & 0xF;
+    return (m_lightmap[x * 16 * 16 + z * 16 + y] >> 4) & 0xF;
 }
 
 int Chunk::getSunlight(const glm::ivec3 &pos)
 {
-    return (m_lightmap[pos.x][pos.y][pos.z] >> 4) & 0xF;
+    return (m_lightmap[pos.x * 16 * 16 + pos.z * 16 + pos.y] >> 4) & 0xF;
 }
 
 void Chunk::setLight(int x, int y, int z, int val)
 {
-    m_lightmap[x][y][z] = (m_lightmap[x][y][z] & 0xF0) | val;
+    int idx = x * 16 * 16 + z * 16 + y;
+    m_lightmap[idx] = (m_lightmap[idx] & 0xF0) | val;
 }
 
 int Chunk::getLight(int x, int y, int z)
 {
-    return (m_lightmap[x][y][z]) & 0xF;
+    return (m_lightmap[x * 16 * 16 + z * 16 + y]) & 0xF;
 }
 
 int Chunk::getLight(const glm::ivec3 &pos)
 {
-    return (m_lightmap[pos.x][pos.y][pos.z]) & 0xF;
+    return (m_lightmap[pos.x * 16 * 16 + pos.z * 16 + pos.y]) & 0xF;
 }
 
 void Chunk::bufferData()
@@ -102,7 +102,7 @@ void Chunk::initBlocks()
         {
             for (int z = 0; z < CHUNK_SIZE; z++)
             {
-                m_blocks[x][y][z] = Blocks::Air;
+                m_blocks[x * 16 * 16 + z * 16 + y] = Blocks::Air;
             }
         }
     }

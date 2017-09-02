@@ -182,7 +182,12 @@ void Game::processInput(float dt)
             if (hit)
             {
                 glm::vec3 rpos = block == Blocks::Air ? hitPos : hitPos + hitNorm;
-                m_world.setBlockType(rpos, block);
+                glm::ivec3 local;
+                Chunk *c = m_world.getChunk(rpos, &local);
+                //m_world.setBlockType(rpos, block);
+                c->setBlock(local.x, local.y, local.z, block);
+                dirtyNeighbors(*c, local);
+
                 m_cooldown = 0.0f;
                 m_lighting.pushUpdate(true, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
                 m_lighting.pushUpdate(false, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
@@ -288,7 +293,7 @@ void Game::updateNearest(const glm::ivec3 &center, int maxJobs)
 
 void Game::updateChunks()
 {
-    glm::ivec3 current = static_cast<glm::vec3>(glm::floor(m_camera.getPos() / 16.0f));
+    glm::ivec3 current = static_cast<glm::ivec3>(glm::floor(m_camera.getPos() / 16.0f));
     int maxJobs = std::max(m_pool.getWorkerAmount() - m_pool.getJobsAmount(), 1);
     std::vector<glm::ivec3> toErase;
 
@@ -330,4 +335,38 @@ void Game::updateChunks()
 
     m_updates.for_each(update);
     m_updates.clear();
+}
+
+void Game::dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos)
+{
+    chunk.setDirty(true);
+
+    glm::ivec3 neighbors[3] = { glm::ivec3(0) };
+
+    if (pos.x == 0)
+        neighbors[0] = glm::ivec3(-1, 0, 0);
+    else if (pos.x == 15)
+        neighbors[0] = glm::ivec3(1, 0, 0);
+
+    if (pos.y == 0)
+        neighbors[1] = glm::ivec3(0, -1, 0);
+    else if (pos.y == 15)
+        neighbors[1] = glm::ivec3(0, 1, 0);
+
+    if (pos.z == 0)
+        neighbors[2] = glm::ivec3(0, 0, -1);
+    else if (pos.z == 15)
+        neighbors[2] = glm::ivec3(0, 0, 1);
+
+    for (int i = 0; i < 3; i++)
+    {
+        if (neighbors[i] != glm::ivec3(0))
+        {
+            Chunk *c = m_world.getChunkFromCoords(chunk.getCoords() + neighbors[i]);
+            if (c == nullptr)
+                return;
+
+            c->setDirty(true);
+        }
+    }
 }

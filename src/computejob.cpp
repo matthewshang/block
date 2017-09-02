@@ -15,22 +15,14 @@ ComputeJob::ComputeJob(Chunk &chunk, World &world) :
 
 void ComputeJob::execute()
 {
+    Timer t;
+    t.start();
     buildMesh();
+    t.log("Mesh build: ");
 }
 
 void ComputeJob::transfer()
 {
-    //for (int x = 0; x < CHUNK_SIZE; x++)
-    //{
-    //    for (int y = 0; y < CHUNK_SIZE; y++)
-    //    {
-    //        for (int z = 0; z < CHUNK_SIZE; z++)
-    //        {
-    //            m_chunk.setLight(x, y, z, m_data.getLight(x + CHUNK_SIZE, y + CHUNK_SIZE, z + CHUNK_SIZE));
-    //        }
-    //    }
-    //}
-
     m_chunk.m_vertices = std::move(m_vertices);
     m_chunk.m_dirty = false;
     m_chunk.m_glDirty = true;
@@ -75,7 +67,7 @@ void ComputeJob::smoothLighting(int x, int y, int z, float light[6][4])
     }
 }
 
-void ComputeJob::smoothLighting2(const glm::ivec3 &worldPos, float light[6][4], float sunlight[6][4])
+void ComputeJob::smoothLighting2(const glm::ivec3 &localPos, LightData &ld, float light[6][4], float sunlight[6][4])
 {
     static const glm::ivec3 start[6][4] = {
         { glm::ivec3(-1, -1, 1), glm::ivec3(-1, 0, 1), glm::ivec3(0, 0, 1), glm::ivec3(0, -1, 1) },
@@ -99,14 +91,14 @@ void ComputeJob::smoothLighting2(const glm::ivec3 &worldPos, float light[6][4], 
     {
         for (int j = 0; j < 4; j++)
         {
-            glm::ivec3 pos = start[i][j] + worldPos;
+            glm::ivec3 pos = start[i][j] + localPos;
             float blockVal = 0.0f;
             float sunVal = 0.0f;
             for (int k = 0; k < 4; k++)
             {
                 const glm::ivec3 &d = off[i][k];
-                blockVal += static_cast<float>(m_world.getLight(pos + d));
-                sunVal += static_cast<float>(m_world.getSunlight(pos + d));
+                blockVal += static_cast<float>(ld.getLight(pos + d));
+                sunVal += static_cast<float>(ld.getSunlight(pos + d));
             }
             light[i][j] = blockVal / 4.0f;
             sunlight[i][j] = sunVal / 4.0f;
@@ -114,7 +106,7 @@ void ComputeJob::smoothLighting2(const glm::ivec3 &worldPos, float light[6][4], 
     }
 }
 
-void ComputeJob::faceLighting(const glm::ivec3 &worldPos, float light[6][4])
+void ComputeJob::faceLighting(const glm::ivec3 &worldPos, float light[6][4], float sunlight[6][4])
 {
     static const glm::ivec3 off[6] = {
         glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1), glm::ivec3(-1, 0, 0),
@@ -125,7 +117,10 @@ void ComputeJob::faceLighting(const glm::ivec3 &worldPos, float light[6][4])
     {
         const glm::ivec3 &d = off[i];
         for (int j = 0; j < 4; j++)
+        {
             light[i][j] = static_cast<float>(m_world.getLight(worldPos + d));
+            sunlight[i][j] = static_cast<float>(m_world.getSunlight(worldPos + d));
+        }
     }
 }
 
@@ -153,9 +148,20 @@ void ComputeJob::buildMesh()
     int total = 0;
     m_vertices.clear();
 
+    LightData ld;
+
+    for (int x = -1; x < CHUNK_SIZE + 1; x++)
+    for (int z = -1; z < CHUNK_SIZE + 1; z++)
+    for (int y = -1; y < CHUNK_SIZE + 1; y++)
+    {
+        glm::ivec3 worldPos = glm::ivec3(x, y, z) + m_chunk.getCoords() * 16;
+        ld.setLight(x + 1, y + 1, z + 1, m_world.getLight(worldPos));
+        ld.setSunlight(x + 1, y + 1, z + 1, m_world.getSunlight(worldPos));
+    }
+
     for (int x = 0; x < CHUNK_SIZE; x++)
-    for (int y = 0; y < CHUNK_SIZE; y++)
     for (int z = 0; z < CHUNK_SIZE; z++)
+    for (int y = 0; y < CHUNK_SIZE; y++)
     {
         if (m_chunk.getBlock(x, y, z) == Blocks::Air)
             continue;
@@ -168,8 +174,8 @@ void ComputeJob::buildMesh()
         glm::ivec3 pos = (m_chunk.getCoords() * 16) + glm::ivec3(x, y, z);
 
         //smoothLighting(dx, dy, dz, light);
-        smoothLighting2(pos, light, sunlight);
-        //faceLighting(pos, light); 
+        smoothLighting2(glm::ivec3(x, y, z) + 1, ld, light, sunlight);
+        //faceLighting(pos, light, sunlight); 
 
         int type = m_chunk.getBlock(local);
 

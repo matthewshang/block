@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -16,8 +17,6 @@ class Chunk
 {
 public:
     friend class ComputeJob;
-
-    static const int opposites[6];
 
     Chunk(glm::ivec3 pos);
 
@@ -51,7 +50,9 @@ private:
 
     glm::ivec3 m_pos;
     glm::vec3 m_worldCenter;
-    uint8_t m_blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-    uint8_t m_lightmap[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    std::array<uint8_t, 16 * 16 * 16> m_blocks;
+    std::array<uint8_t, 16 * 16 * 16> m_lightmap;
+    //uint8_t m_blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    //uint8_t m_lightmap[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
     std::vector<float> m_vertices;
 };
