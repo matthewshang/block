@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace Blocks
 {
     enum
@@ -26,6 +28,6 @@ namespace Blocks
     bool isLight(int type);
     bool isSolid(int type);
 
-    int luminance(int type);
-    int opacity(int type);
+    uint8_t luminance(int type);
+    uint8_t opacity(int type);
 }

@@ -11,7 +11,6 @@
 #include "chunk.h"
 #include "computejob.h"
 #include "frustum.h"
-#include "lighting.h"
 #include "inputmanager.h"
 #include "player.h"
 #include "renderer.h"
@@ -37,7 +36,7 @@ private:
     void updateChunks();
     void dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos);
 
-    const int m_loadDistance = 4;
+    const int m_loadDistance = 1;
     float m_eraseDistance;
     float m_viewDistance;
 
@@ -47,7 +46,6 @@ private:
 
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;
-    Lighting m_lighting;
     Renderer m_renderer;
     InputManager m_input;
 

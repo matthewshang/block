@@ -63,7 +63,7 @@ bool Blocks::isSolid(int type)
     return true;
 }
 
-int Blocks::luminance(int type)
+uint8_t Blocks::luminance(int type)
 {
     switch (type)
     {
@@ -74,7 +74,7 @@ int Blocks::luminance(int type)
     }
 }
 
-int Blocks::opacity(int type)
+uint8_t Blocks::opacity(int type)
 {
     switch (type)
     {

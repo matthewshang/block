@@ -16,7 +16,7 @@
 
 Game::Game(GLFWwindow *window) : m_window(window), m_camera(glm::vec3(-88, 55, -28)),
     m_chunkGenerator(), m_processed(), m_renderer(m_world), m_player(glm::vec3(-88, 55, -28), m_camera),
-    m_input(window), m_lighting(m_world), m_world()
+    m_input(window), m_world()
 {
     m_cooldown = 0.0f;
     glfwGetWindowSize(m_window, &m_width, &m_height);
@@ -60,21 +60,6 @@ void Game::run()
 
             updateChunks();
 
-            Timer t;
-            t.start();
-
-            int i = 0;
-            while (!m_lighting.empty() && i++ < 4000)
-            {
-                m_lighting.lightNext();
-            }
-
-            //if (i > 0)
-            //{
-            //    t.log("Lighting: ");
-            //    std::cout << i << std::endl;
-            //}
-
             accumulator -= dt;
         }
 
@@ -93,8 +78,8 @@ void Game::run()
             glm::ivec3 ipos = glm::floor(m_camera.getPos() / 16.0f);
             char title[256];
             title[255] = '\0';
-            snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [%d ops] [pos: %f, %f, %f] [chunk: %d %d %d]", 
-                nFrames, m_world.getMap().size(), m_pool.getJobsAmount(), m_lighting.getNumOps(),
+            snprintf(title, 255, "block - [FPS: %ld] [%zd chunks] [%d jobs queued] [pos: %f, %f, %f] [chunk: %d %d %d]", 
+                nFrames, m_world.getMap().size(), m_pool.getJobsAmount(), 
                 m_camera.getPos().x, m_camera.getPos().y, m_camera.getPos().z, ipos.x, ipos.y, ipos.z);
             glfwSetWindowTitle(m_window, title);
             lastTime += 1.0f;
@@ -184,13 +169,12 @@ void Game::processInput(float dt)
                 glm::vec3 rpos = block == Blocks::Air ? hitPos : hitPos + hitNorm;
                 glm::ivec3 local;
                 Chunk *c = m_world.getChunk(rpos, &local);
+                std::cout << c->isEmpty() << std::endl;
                 //m_world.setBlockType(rpos, block);
                 c->setBlock(local.x, local.y, local.z, block);
                 dirtyNeighbors(*c, local);
 
                 m_cooldown = 0.0f;
-                m_lighting.pushUpdate(true, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
-                m_lighting.pushUpdate(false, rpos, static_cast<glm::ivec3>(rpos) + glm::ivec3(1));
             }
         }
     }
@@ -261,6 +245,12 @@ void Game::updateNearest(const glm::ivec3 &center, int maxJobs)
             if (!chunk->isDirty())
                 continue;
 
+            //if (chunk->isEmpty())
+            //{
+            //    chunk->setDirty(false);
+            //    continue;
+            //}
+
             const glm::ivec3 &coords = chunk->getCoords();
             int visible = !m_frustum.boxInFrustum(static_cast<glm::vec3>(coords * 16), glm::vec3(16));
             int distance = abs(coords.x - center.x) + abs(coords.y - center.y) + abs(coords.z - center.z);
@@ -278,7 +268,7 @@ void Game::updateNearest(const glm::ivec3 &center, int maxJobs)
             bestChunk->setDirty(false);
             auto update = [this, bestChunk]() -> void
             {
-                auto compute = std::make_unique<ComputeJob>(*bestChunk, m_world);
+                auto compute = std::make_unique<ComputeJob>(*bestChunk, m_world, true);
                 compute->execute();
                 m_updates.push_back(compute);
             };
@@ -316,17 +306,10 @@ void Game::updateChunks()
 
     updateNearest(current, maxJobs);
 
-    auto move = [this](std::unique_ptr<Chunk> &c) -> void
-    {
-        glm::ivec3 coords = c->getCoords();
-        m_world.insert(coords, c);
-        //m_chunks.insert(std::make_pair(coords, std::move(c)));
-        m_lighting.pushUpdate(true, coords * 16, (coords + 1) * 16);
-        m_lighting.pushUpdate(false, coords * 16, (coords + 1) * 16);
+    static const std::array<glm::ivec3, 6> neighbors = {
+        glm::ivec3(1, 0, 0), glm::ivec3(-1, 0, 0), glm::ivec3(0, 1, 0),
+        glm::ivec3(0, -1, 0), glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1)
     };
-
-    m_processed.for_each(move);
-    m_processed.clear();
 
     auto update = [this](std::unique_ptr<ComputeJob> &job) -> void
     {
@@ -335,6 +318,15 @@ void Game::updateChunks()
 
     m_updates.for_each(update);
     m_updates.clear();
+
+    auto move = [this](std::unique_ptr<Chunk> &c) -> void
+    {
+        glm::ivec3 coords = c->getCoords();
+        m_world.insert(coords, c);
+    };
+
+    m_processed.for_each(move);
+    m_processed.clear();
 }
 
 void Game::dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos)

@@ -15,7 +15,7 @@
 // Data order: X -> Z -> Y
 
 Chunk::Chunk(glm::ivec3 pos) : m_pos(pos), m_dirty(false), m_glDirty(true), m_vertices(),
-m_lightmap{}, m_empty(true), m_blocks{}
+m_lightmap{ 0 }, m_empty(true), m_blocks{}
 {
     m_worldCenter = glm::vec3(pos.x * 16 + 8, pos.y * 16 + 8, pos.z * 16 + 8);
 
@@ -89,7 +89,7 @@ void Chunk::compute(World &world)
     if (!m_dirty)
         return;
 
-    ComputeJob job(*this, world);
+    ComputeJob job(*this, world, true);
     job.execute();
     job.transfer();
 }
