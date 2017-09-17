@@ -70,15 +70,6 @@ void ComputeJob::copyLighting(LightData &ld)
     }
 }
 
-struct LightOp
-{
-    LightOp(bool _isBlock, const glm::ivec3 &_min, const glm::ivec3 &_max) :
-        isBlock(_isBlock), min(_min), max(_max) {};
-    bool isBlock;
-    glm::ivec3 min;
-    glm::ivec3 max;
-};
-
 void ComputeJob::doLighting(LightData &ld)
 {
     std::stack<LightOp> ops;
@@ -149,9 +140,9 @@ void ComputeJob::lightNext(LightData &ld, std::stack<LightOp> &ops)
 
             if (x + 1 >= op._max.x)
                 propegate(x + 1, y, z, val, ld, ops, op);
-            if (y + 1 >= op._max.y)          ld, ops,
+            if (y + 1 >= op._max.y)          
                 propegate(x, y + 1, z, val, ld, ops, op);
-            if (z + 1 >= op._max.z)          ld, ops,
+            if (z + 1 >= op._max.z)          
                 propegate(x, y, z + 1, val, ld, ops, op);
         }
     }
