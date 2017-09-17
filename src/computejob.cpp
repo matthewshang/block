@@ -11,14 +11,13 @@
 ComputeJob::ComputeJob(Chunk &chunk, World &world, bool doLighting) :
     m_chunk(chunk), m_world(world), m_doLighting(doLighting), m_ld()
 {
+    copyLighting(m_ld);
 }
 
 void ComputeJob::execute()
 {
     Timer t;
     t.start();
-
-    copyLighting(m_ld);
 
     if (m_doLighting)
         doLighting(m_ld);
@@ -53,9 +52,21 @@ void ComputeJob::copyLighting(LightData &ld)
     {
         glm::ivec3 local = glm::ivec3(x, y, z);
         glm::ivec3 worldPos = local + m_chunk.getCoords() * 16;
-        ld.setLight(local + 1, m_world.getLight(worldPos));
-        ld.setSunlight(local + 1, m_world.getSunlight(worldPos));
-        ld.setBlock(local + 1, m_world.getBlockType(worldPos));
+
+        if (x > -1 && x < CHUNK_SIZE &&
+            y > -1 && y < CHUNK_SIZE &&
+            z > -1 && z < CHUNK_SIZE)
+        {
+            ld.setLight(local + 1, m_chunk.getLight(local));
+            ld.setSunlight(local + 1, m_chunk.getSunlight(local));
+            ld.setBlock(local + 1, m_chunk.getBlock(local));
+        }
+        else
+        {
+            ld.setLight(local + 1, m_world.getLight(worldPos));
+            ld.setSunlight(local + 1, m_world.getSunlight(worldPos));
+            ld.setBlock(local + 1, m_world.getBlockType(worldPos));
+        }
     }
 }
 

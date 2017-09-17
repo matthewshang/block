@@ -36,7 +36,7 @@ private:
     void updateChunks();
     void dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos);
 
-    const int m_loadDistance = 1;
+    const int m_loadDistance = 2;
     float m_eraseDistance;
     float m_viewDistance;
 
