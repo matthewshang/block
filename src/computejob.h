@@ -5,6 +5,7 @@
 #endif
 
 #include <queue>
+#include <set>
 #include <stack>
 #include <vector>
 
@@ -14,11 +15,15 @@
 class ComputeJob
 {
 public:
-    ComputeJob(Chunk &chunk, World &world, bool doLighting);
+    ComputeJob(Chunk *chunk, World &world, bool doLighting, bool init);
 
     void execute();
 
     void transfer();
+
+    const std::set<glm::ivec3, Vec3Comp> getGlobalSpread();
+    Chunk *getChunk() const { return m_chunk; };
+    bool isInit() const { return m_init; };
 
 private:
     struct LightData
@@ -77,6 +82,7 @@ private:
     void doLighting(LightData &ld);
     void lightNext(LightData &ld, std::stack<LightOp> &ops);
     void propegate(int x, int y, int z, uint8_t val, LightData &ld, std::stack<LightOp> &ops, const LightOp &op);
+    void globalProp(const glm::ivec3 &local);
 
     void smoothLighting(const glm::ivec3 &localPos, LightData &ld, float light[6][4], float sunlight[6][4]);
     void faceLighting(const glm::ivec3 &worldPos, LightData &ld, float light[6][4], float sunlight[6][4]);
@@ -84,9 +90,11 @@ private:
     void buildMesh(LightData &ld);
 
     bool m_doLighting;
+    bool m_init;
     LightData m_ld;
     World &m_world;
-    Chunk &m_chunk;
+    Chunk *m_chunk;
     std::vector<float> m_vertices;
     bool m_empty;
+    std::set<glm::ivec3, Vec3Comp> m_lightSpread;
 };

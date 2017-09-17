@@ -84,16 +84,6 @@ void Chunk::bufferData()
     }
 }
 
-void Chunk::compute(World &world)
-{
-    if (!m_dirty)
-        return;
-
-    ComputeJob job(*this, world, true);
-    job.execute();
-    job.transfer();
-}
-
 void Chunk::initBlocks()
 {
     for (int x = 0; x < CHUNK_SIZE; x++)

@@ -3,6 +3,7 @@
 #include <mutex>
 #include <set>
 #include <vector>
+#include <deque>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -36,13 +37,16 @@ private:
     void updateChunks();
     void dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos);
 
-    const int m_loadDistance = 2;
+    void pushUpdate(const glm::ivec3 &coords, bool lighting);
+
+    const int m_loadDistance = 0;
     float m_eraseDistance;
     float m_viewDistance;
 
     World m_world;
-    SharedVector<std::unique_ptr<Chunk>> m_processed;
     SharedVector<std::unique_ptr<ComputeJob>> m_updates;
+    std::deque<std::pair<glm::ivec3, bool>> m_updateQueue;
+    std::set<glm::ivec3, Vec3Comp> m_uniqueUpdates;
 
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;

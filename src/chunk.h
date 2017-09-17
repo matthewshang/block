@@ -20,7 +20,6 @@ public:
 
     Chunk(glm::ivec3 pos);
 
-    void compute(World &world);
     void bufferData();
 
     Mesh &getMesh() const { return *m_mesh; };
