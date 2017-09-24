@@ -35,18 +35,16 @@ private:
     void loadNearest(const glm::ivec3 &center, int maxJobs);
     void updateNearest(const glm::ivec3 &center, int maxJobs);
     void updateChunks();
-    void dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos);
+    void dirtyPlacedNeighbors(Chunk &chunk, const glm::ivec3 &pos);
+    void setLoadDirty(const glm::ivec3 &coords, bool dirty);
 
-    void pushUpdate(const glm::ivec3 &coords, bool lighting);
-
-    const int m_loadDistance = 0;
+    const int m_loadDistance = 1;
     float m_eraseDistance;
     float m_viewDistance;
 
     World m_world;
     SharedVector<std::unique_ptr<ComputeJob>> m_updates;
-    std::deque<std::pair<glm::ivec3, bool>> m_updateQueue;
-    std::set<glm::ivec3, Vec3Comp> m_uniqueUpdates;
+    std::map<glm::ivec3, bool, Vec3Comp> m_loadDirty;
 
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;

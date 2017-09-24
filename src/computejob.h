@@ -21,7 +21,6 @@ public:
 
     void transfer();
 
-    const std::set<glm::ivec3, Vec3Comp> getGlobalSpread();
     Chunk *getChunk() const { return m_chunk; };
     bool isInit() const { return m_init; };
 
@@ -82,7 +81,7 @@ private:
     void doLighting(LightData &ld);
     void lightNext(LightData &ld, std::stack<LightOp> &ops);
     void propegate(int x, int y, int z, uint8_t val, LightData &ld, std::stack<LightOp> &ops, const LightOp &op);
-    void globalProp(const glm::ivec3 &local);
+    //void globalProp(const glm::ivec3 &local);
 
     void smoothLighting(const glm::ivec3 &localPos, LightData &ld, float light[6][4], float sunlight[6][4]);
     void faceLighting(const glm::ivec3 &worldPos, LightData &ld, float light[6][4], float sunlight[6][4]);
@@ -96,5 +95,5 @@ private:
     Chunk *m_chunk;
     std::vector<float> m_vertices;
     bool m_empty;
-    std::set<glm::ivec3, Vec3Comp> m_lightSpread;
+    std::set<glm::ivec3, Vec3Comp> m_light;
 };

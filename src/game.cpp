@@ -169,10 +169,9 @@ void Game::processInput(float dt)
                 glm::vec3 rpos = block == Blocks::Air ? hitPos : hitPos + hitNorm;
                 glm::ivec3 local;
                 Chunk *c = m_world.getChunk(rpos, &local);
-                std::cout << c->isEmpty() << std::endl;
                 //m_world.setBlockType(rpos, block);
                 c->setBlock(local.x, local.y, local.z, block);
-                dirtyNeighbors(*c, local);
+                dirtyPlacedNeighbors(*c, local);
 
                 m_cooldown = 0.0f;
             }
@@ -296,6 +295,32 @@ void Game::updateChunks()
 
     updateNearest(current, maxJobs);
 
+    int max = 0;
+    for (auto &it : m_loadDirty)
+    {
+        if (max > 7)
+            break;
+
+        if (!it.second)
+            continue;
+
+        Chunk *bestChunk = m_world.getChunkFromCoords(it.first);
+        if (bestChunk == nullptr)
+            continue;
+
+        auto update = [this, bestChunk]() -> void
+        {
+            auto compute = std::make_unique<ComputeJob>(bestChunk, m_world, true, false);
+            compute->execute();
+            m_updates.push_back(compute);
+        };
+        m_pool.addJob(update);
+        it.second = false;
+        max++;
+    }
+
+    if (max > 0) std::cout << max << std::endl;
+
     static const std::array<glm::ivec3, 6> neighbors = {
         glm::ivec3(1, 0, 0), glm::ivec3(-1, 0, 0), glm::ivec3(0, 1, 0),
         glm::ivec3(0, -1, 0), glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1)
@@ -305,17 +330,16 @@ void Game::updateChunks()
     {
         job->transfer();
         const glm::ivec3 &coords = job->getChunk()->getCoords();
-        const std::set<glm::ivec3, Vec3Comp>& spread = job->getGlobalSpread();
-        std::cout << spread.size() << std::endl;
-        for (const auto &n : neighbors)
-        {
-            pushUpdate(coords + n, spread.find(n) != spread.end());
-        }
 
         if (job->isInit())
         {
             std::unique_ptr<Chunk> c(job->getChunk());
             m_world.insert(coords, c);
+            for (const auto &n : neighbors)
+            {
+                setLoadDirty(coords + n, true);
+            }
+            //std::cout << m_loadDirty.size() << std::endl;
         }
     };
 
@@ -323,7 +347,7 @@ void Game::updateChunks()
     m_updates.clear();
 }
 
-void Game::dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos)
+void Game::dirtyPlacedNeighbors(Chunk &chunk, const glm::ivec3 &pos)
 {
     chunk.setDirty(true);
 
@@ -357,23 +381,15 @@ void Game::dirtyNeighbors(Chunk &chunk, const glm::ivec3 &pos)
     }
 }
 
-void Game::pushUpdate(const glm::ivec3 &coords, bool lighting)
+void Game::setLoadDirty(const glm::ivec3 &coords, bool dirty)
 {
-    std::cout << "Update: " << glm::to_string(coords) << " " << lighting << std::endl;
-    if (m_uniqueUpdates.find(coords) != m_uniqueUpdates.end())
+    auto it = m_loadDirty.find(coords);
+    if (it == m_loadDirty.end())
     {
-        for (auto& u : m_updateQueue)
-        {
-            if (u.first == coords)
-            {
-                u.second = lighting;
-                break;
-            }
-        }
+        m_loadDirty.insert(std::make_pair(coords, dirty));
     }
     else
     {
-        m_updateQueue.push_back(std::make_pair(coords, lighting));
-        m_uniqueUpdates.insert(coords);
+        it->second = dirty;
     }
 }

@@ -44,11 +44,6 @@ void ComputeJob::transfer()
     m_chunk->m_empty = m_empty;
 }
 
-const std::set<glm::ivec3, Vec3Comp> ComputeJob::getGlobalSpread()
-{
-    return m_lightSpread;
-}
-
 void ComputeJob::copyLighting(LightData &ld)
 {
     for (int x = -1; x < CHUNK_SIZE + 1; x++)
@@ -138,7 +133,7 @@ void ComputeJob::lightNext(LightData &ld, std::stack<LightOp> &ops)
             else
                 ld.setSunlight(local, newLight);
 
-            globalProp(local);
+            //globalProp(local);
 
             uint8_t val = static_cast<uint8_t>(std::max((int)newLight - 1, 0));
             propegate(x - 1, y, z, val, ld, ops, op);
@@ -173,21 +168,21 @@ void ComputeJob::propegate(int x, int y, int z, uint8_t val, LightData &ld, std:
     }
 }
 
-void ComputeJob::globalProp(const glm::ivec3 &local)
-{
-    if (local.x < 2)
-        m_lightSpread.insert(glm::ivec3(-1, 0, 0));
-    else if (local.x > 15)
-        m_lightSpread.insert(glm::ivec3(1, 0, 0));
-    else if (local.y < 2)
-        m_lightSpread.insert(glm::ivec3(0, -1, 0));
-    else if (local.y > 15)
-        m_lightSpread.insert(glm::ivec3(0, 1, 0));
-    else if (local.z < 2)
-        m_lightSpread.insert(glm::ivec3(0, 0, -1));
-    else if (local.z > 15)
-        m_lightSpread.insert(glm::ivec3(0, 0, 1));
-}
+//void ComputeJob::globalProp(const glm::ivec3 &local)
+//{
+//    if (local.x < 2)
+//        m_lightSpread.insert(glm::ivec3(-1, 0, 0));
+//    else if (local.x > 15)
+//        m_lightSpread.insert(glm::ivec3(1, 0, 0));
+//    else if (local.y < 2)
+//        m_lightSpread.insert(glm::ivec3(0, -1, 0));
+//    else if (local.y > 15)
+//        m_lightSpread.insert(glm::ivec3(0, 1, 0));
+//    else if (local.z < 2)
+//        m_lightSpread.insert(glm::ivec3(0, 0, -1));
+//    else if (local.z > 15)
+//        m_lightSpread.insert(glm::ivec3(0, 0, 1));
+//}
 
 void ComputeJob::smoothLighting(const glm::ivec3 &localPos, LightData &ld, float light[6][4], float sunlight[6][4])
 {
