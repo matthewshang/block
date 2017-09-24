@@ -24,7 +24,7 @@ void ComputeJob::execute()
 
     buildMesh(m_ld);
 
-    // t.log("Compute time: ");
+     t.log("Compute time: ");
 }
 
 void ComputeJob::transfer()
@@ -36,6 +36,7 @@ void ComputeJob::transfer()
         glm::ivec3 local = glm::ivec3(x, y, z);
         m_chunk->setLight(local.x, local.y, local.z, m_ld.getLight(local + 1));
         m_chunk->setSunlight(local.x, local.y, local.z, m_ld.getSunlight(local + 1));
+        int val = m_ld.getSunlight(local + 1);
     }
 
     m_chunk->m_vertices = std::move(m_vertices);
@@ -65,6 +66,8 @@ void ComputeJob::copyLighting(LightData &ld)
         {
             ld.setLight(local + 1, m_world.getLight(worldPos));
             ld.setSunlight(local + 1, m_world.getSunlight(worldPos));
+            //ld.setSunlight(local + 1, 15);
+
             ld.setBlock(local + 1, m_world.getBlockType(worldPos));
         }
     }
@@ -96,7 +99,7 @@ void ComputeJob::lightNext(LightData &ld, std::stack<LightOp> &ops)
     if (op._min.x < 1 || op._max.x > 17 ||
         op._min.y < 1 || op._max.y > 17 ||
         op._min.z < 1 || op._max.z > 17)
-    {
+    { 
         return;
     }
 
@@ -133,8 +136,6 @@ void ComputeJob::lightNext(LightData &ld, std::stack<LightOp> &ops)
             else
                 ld.setSunlight(local, newLight);
 
-            //globalProp(local);
-
             uint8_t val = static_cast<uint8_t>(std::max((int)newLight - 1, 0));
             propegate(x - 1, y, z, val, ld, ops, op);
             propegate(x, y - 1, z, val, ld, ops, op);
@@ -165,24 +166,33 @@ void ComputeJob::propegate(int x, int y, int z, uint8_t val, LightData &ld, std:
     if (val != current)
     {
         ops.emplace(op.isBlock, local, local + 1);
+        globalProp(local);
     }
 }
 
-//void ComputeJob::globalProp(const glm::ivec3 &local)
-//{
-//    if (local.x < 2)
-//        m_lightSpread.insert(glm::ivec3(-1, 0, 0));
-//    else if (local.x > 15)
-//        m_lightSpread.insert(glm::ivec3(1, 0, 0));
-//    else if (local.y < 2)
-//        m_lightSpread.insert(glm::ivec3(0, -1, 0));
-//    else if (local.y > 15)
-//        m_lightSpread.insert(glm::ivec3(0, 1, 0));
-//    else if (local.z < 2)
-//        m_lightSpread.insert(glm::ivec3(0, 0, -1));
-//    else if (local.z > 15)
-//        m_lightSpread.insert(glm::ivec3(0, 0, 1));
-//}
+static int sign(float val)
+{
+    return val > 0 ? 1 : -1;
+}
+
+void ComputeJob::globalProp(const glm::ivec3 &local)
+{
+    glm::vec3 d = static_cast<glm::vec3>(local) - glm::vec3(8.5);
+    glm::vec3 s = glm::abs(d);
+    glm::ivec3 n;
+
+    if (s.x >= 7.5)
+        n.x = sign(d.x);
+    if (s.y >= 7.5)
+        n.y = sign(d.y);
+    if (s.z >= 7.5)
+        n.z = sign(d.z);
+
+    if (n != glm::ivec3(0))
+    {
+        m_light.insert(n);
+    }
+}
 
 void ComputeJob::smoothLighting(const glm::ivec3 &localPos, LightData &ld, float light[6][4], float sunlight[6][4])
 {

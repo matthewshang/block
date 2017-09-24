@@ -310,7 +310,7 @@ void Game::updateChunks()
 
         auto update = [this, bestChunk]() -> void
         {
-            auto compute = std::make_unique<ComputeJob>(bestChunk, m_world, true, false);
+            auto compute = std::make_unique<ComputeJob>(bestChunk, m_world, false, false);
             compute->execute();
             m_updates.push_back(compute);
         };
@@ -319,7 +319,29 @@ void Game::updateChunks()
         max++;
     }
 
-    if (max > 0) std::cout << max << std::endl;
+    max = 0;
+    for (auto &it : m_lightDirty)
+    {
+        if (max > 7)
+            break;
+
+        if (!it.second)
+            continue;
+
+        Chunk *bestChunk = m_world.getChunkFromCoords(it.first);
+        if (bestChunk == nullptr)
+            continue;
+
+        auto update = [this, bestChunk]() -> void
+        {
+            auto compute = std::make_unique<ComputeJob>(bestChunk, m_world, true, false);
+            compute->execute();
+            m_updates.push_back(compute);
+        };
+        m_pool.addJob(update);
+        it.second = false;
+        max++;
+    }
 
     static const std::array<glm::ivec3, 6> neighbors = {
         glm::ivec3(1, 0, 0), glm::ivec3(-1, 0, 0), glm::ivec3(0, 1, 0),
@@ -339,7 +361,12 @@ void Game::updateChunks()
             {
                 setLoadDirty(coords + n, true);
             }
-            //std::cout << m_loadDirty.size() << std::endl;
+        }
+
+        const auto &light = job->getLight();
+        for (const auto &n : light)
+        {
+            setLightDirty(coords + n, true);
         }
     };
 
@@ -387,6 +414,19 @@ void Game::setLoadDirty(const glm::ivec3 &coords, bool dirty)
     if (it == m_loadDirty.end())
     {
         m_loadDirty.insert(std::make_pair(coords, dirty));
+    }
+    else
+    {
+        it->second = dirty;
+    }
+}
+
+void Game::setLightDirty(const glm::ivec3 &coords, bool dirty)
+{
+    auto it = m_lightDirty.find(coords);
+    if (it == m_lightDirty.end())
+    {
+        m_lightDirty.insert(std::make_pair(coords, dirty));
     }
     else
     {

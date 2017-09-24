@@ -98,7 +98,7 @@ void TerrainGenerator::generate(Chunk &c)
         }
     }
 
-    //initSunlight(c);
+    initSunlight(c);
 }
 
 static bool canPutTree(int x, int y, int z)

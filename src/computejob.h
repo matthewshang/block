@@ -22,6 +22,7 @@ public:
     void transfer();
 
     Chunk *getChunk() const { return m_chunk; };
+    const std::set<glm::ivec3, Vec3Comp> &getLight() const { return m_light; };
     bool isInit() const { return m_init; };
 
 private:
@@ -81,7 +82,7 @@ private:
     void doLighting(LightData &ld);
     void lightNext(LightData &ld, std::stack<LightOp> &ops);
     void propegate(int x, int y, int z, uint8_t val, LightData &ld, std::stack<LightOp> &ops, const LightOp &op);
-    //void globalProp(const glm::ivec3 &local);
+    void globalProp(const glm::ivec3 &local);
 
     void smoothLighting(const glm::ivec3 &localPos, LightData &ld, float light[6][4], float sunlight[6][4]);
     void faceLighting(const glm::ivec3 &worldPos, LightData &ld, float light[6][4], float sunlight[6][4]);

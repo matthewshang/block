@@ -37,14 +37,16 @@ private:
     void updateChunks();
     void dirtyPlacedNeighbors(Chunk &chunk, const glm::ivec3 &pos);
     void setLoadDirty(const glm::ivec3 &coords, bool dirty);
+    void setLightDirty(const glm::ivec3 &coords, bool dirty);
 
-    const int m_loadDistance = 1;
+    const int m_loadDistance = 4;
     float m_eraseDistance;
     float m_viewDistance;
 
     World m_world;
     SharedVector<std::unique_ptr<ComputeJob>> m_updates;
     std::map<glm::ivec3, bool, Vec3Comp> m_loadDirty;
+    std::map<glm::ivec3, bool, Vec3Comp> m_lightDirty;
 
     ThreadPool m_pool;
     TerrainGenerator m_chunkGenerator;
